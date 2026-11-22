@@ -82,6 +82,127 @@ Use the Node.js service settings:
 
 The start script binds to `0.0.0.0` and uses the platform's `PORT` value, falling back to 3000 for local runs.
 
+## Universal Linux VPS deployment
+
+This is the provider-independent deployment path for a self-managed VPS. It suits common Ubuntu/Debian servers and other Linux distributions that can run the project's supported Node.js version.
+
+### 1. Prepare the server
+
+- Linux VPS with a supported 64-bit OS (Ubuntu 22.04/24.04 or Debian are common choices).
+- Node.js **20.x (20.9+)**, npm, Git, and Nginx.
+- A domain name pointed to the VPS public IP.
+- Enough memory and disk for a Next.js production build; build memory needs vary with the server and dependency tree.
+
+Create a dedicated non-root application user and a persistent app directory such as `/var/www/infocraft-web`. Install Node.js 20 using a trusted Node.js distribution/package source appropriate for your OS. Do not expose the app process directly to the public internet.
+
+### 2. Fetch and build the application
+
+Run as the dedicated application user:
+
+```bash
+sudo mkdir -p /var/www/infocraft-web
+sudo chown -R infocraft:infocraft /var/www/infocraft-web
+sudo -u infocraft git clone https://github.com/NSKWeb/infocraft-web-.git /var/www/infocraft-web
+cd /var/www/infocraft-web
+npm install
+npm run build
+```
+
+For a private repository, configure secure Git authentication on the server; do not embed a personal access token in the clone URL or shell history. There is currently no committed npm lockfile, so use `npm install`. Once a lockfile is committed, prefer `npm ci` for repeatable deployments.
+
+### 3. Configure production secrets
+
+Create a protected environment file outside the repository, for example `/etc/infocraft-web.env`:
+
+```env
+NODE_ENV=production
+PORT=3000
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+GEMINI_API_KEY=...
+```
+
+Set only the optional Firebase values you use. Keep `GEMINI_API_KEY` server-side. Restrict access to the file (for example, owner root and group-readable only by the app service group). Never commit it.
+
+### 4. Run with systemd
+
+Create `/etc/systemd/system/infocraft-web.service`:
+
+```ini
+[Unit]
+Description=InfoCraft Web Next.js application
+After=network.target
+
+[Service]
+Type=simple
+User=infocraft
+Group=infocraft
+WorkingDirectory=/var/www/infocraft-web
+EnvironmentFile=/etc/infocraft-web.env
+Environment=NODE_ENV=production
+Environment=PORT=3000
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Confirm the actual npm executable path with `command -v npm` and adjust `ExecStart` if it differs. Then enable and start:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now infocraft-web
+sudo systemctl status infocraft-web
+```
+
+The existing start script binds Next.js to `0.0.0.0` and uses the `PORT` environment variable. Keep port 3000 private to the VPS; Nginx will be the public entry point.
+
+### 5. Configure Nginx reverse proxy
+
+Create an Nginx site for your domain and proxy to the local Next.js process:
+
+```nginx
+server {
+    listen 80;
+    server_name YOUR_DOMAIN www.YOUR_DOMAIN;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+Replace `YOUR_DOMAIN` with the real hostname, enable the site using your distribution's Nginx layout, validate with `sudo nginx -t`, and reload Nginx.
+
+### 6. DNS, firewall and HTTPS
+
+- Point the domain's A record to the VPS IPv4 address; configure AAAA only if IPv6 is working end to end.
+- Allow SSH and inbound TCP 80/443 in the VPS/provider firewall.
+- Do not expose port 3000 publicly.
+- Issue and renew TLS certificates using Certbot/Let's Encrypt or another trusted certificate manager. Configure HTTPS redirection after the certificate is installed.
+
+### 7. Verify and maintain
+
+- Check `sudo systemctl status infocraft-web` and `sudo journalctl -u infocraft-web -n 100 --no-pager`.
+- Check `https://YOUR_DOMAIN/api/health` for HTTP 200 and `"status":"ok"`.
+- Test Google sign-in, Firestore save/load/delete, Gemini generation, imports, and exports.
+- For an update: fetch the intended Git commit, install dependencies, run `npm run build`, then restart with `sudo systemctl restart infocraft-web`. Use a maintenance window or a tested release strategy if downtime is unacceptable.
+
+A healthy process and health endpoint do not prove that Firebase/Gemini credentials, Firestore rules, quotas, or all user workflows are correct. Back up the environment file and any operational data/configuration before upgrades.
+
 ## Post-deployment verification
 
 1. Open `https://YOUR_HOSTNAME/api/health`; expect HTTP 200 and JSON containing `"status":"ok"`.
