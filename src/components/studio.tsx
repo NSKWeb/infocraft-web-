@@ -53,6 +53,7 @@ export default function Studio() {
   const [source, setSource] = useState("");
   const [project, setProject] = useState<InfographicProject>(demoProject);
   const [library, setLibrary] = useState<InfographicProject[]>([]);
+  const [libraryHydrated, setLibraryHydrated] = useState(false);
   const [past, setPast] = useState<InfographicProject[]>([]);
   const [future, setFuture] = useState<InfographicProject[]>([]);
   const [notice, setNotice] = useState("Welcome to your creative studio");
@@ -90,7 +91,7 @@ export default function Studio() {
     if (user) return;
     try { window.localStorage.setItem("infocraft-library-v1", JSON.stringify(library.slice(0, 50))); }
     catch { setNotice("Local storage is full. Remove older drafts or sign in for cloud sync."); }
-  }, [library, user]);
+  }, [library, user, libraryHydrated]);
   useEffect(() => {
     if (!user || !db || !project.id) return;
     let active = true;
