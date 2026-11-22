@@ -4,10 +4,11 @@ import { useMemo, useState } from "react";
 import {
   ArrowDownToLine, ArrowRight, BookOpen, Check, ChevronDown, CircleHelp,
   FileImage, FolderOpen, ImagePlus, LayoutDashboard, LoaderCircle, MessageCircle,
-  Moon, Plus, Search, Settings2, Sparkles, Sun, WandSparkles, X
+  Moon, Search, Settings2, Sparkles, Sun, WandSparkles, X
 } from "lucide-react";
-import type { GenerationMode, InfographicProject, InfographicSection, PaletteId, TemplateType } from "@/lib/types";
+import type { InfographicProject, InfographicSection, PaletteId, TemplateType } from "@/lib/types";
 import { PALETTE_LABELS, TEMPLATE_LABELS } from "@/lib/types";
+import "./studio.css";
 
 const templates: TemplateType[] = ["KPI_STACK", "PROCESS_FLOW", "COMPARISON", "DIGEST"];
 const palettes: PaletteId[] = ["SWISS_VERMILION", "COBALT_BLUEPRINT", "CHARCOAL_PRESS", "FOREST_OCHRE"];
