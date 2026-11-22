@@ -1,439 +1,273 @@
-# InfoCraft Web
+<div align="center">
 
-<p align="center">
-  <strong>Turn information into visual stories.</strong><br/>
-  An editorial infographic studio for transforming source material into structured, editable visual content.
+<img src="public/infocraft/hero-banner.svg" alt="InfoCraft — Visual stories, engineered with AI" width="100%" />
+
+<p><strong>Turn raw information into clear, editorial-grade visual stories.</strong><br />An AI-assisted infographic and poster studio for the web.</p>
+
+<p>
+<img src="https://img.shields.io/badge/platform-Web-171717?style=flat-square&logo=googlechrome&logoColor=white" alt="Web" />
+<img src="https://img.shields.io/badge/framework-Next.js%2015-000000?style=flat-square&logo=next.js&logoColor=white" alt="Next.js" />
+<img src="https://img.shields.io/badge/UI-React%2019-149eca?style=flat-square&logo=react&logoColor=white" alt="React" />
+<img src="https://img.shields.io/badge/language-TypeScript-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+<img src="https://img.shields.io/badge/AI-Gemini-F04438?style=flat-square&logo=google&logoColor=white" alt="Gemini" />
 </p>
 
-<p align="center">
-  <img alt="Next.js 15" src="https://img.shields.io/badge/Next.js-15-000000?logo=next.js" />
-  <img alt="React 19" src="https://img.shields.io/badge/React-19-149eca?logo=react" />
-  <img alt="TypeScript 5" src="https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript" />
-  <img alt="Node.js 20+" src="https://img.shields.io/badge/Node.js-20%2B-339933?logo=node.js" />
-  <img alt="Development status" src="https://img.shields.io/badge/status-active%20development-orange" />
-</p>
+<a href="#-the-idea">The idea</a> · <a href="#-the-studio">Studio</a> · <a href="#-capabilities">Capabilities</a> · <a href="#-architecture">Architecture</a> · <a href="#-getting-started">Get started</a>
 
-<p align="center">
-  <a href="#overview">Overview</a> ·
-  <a href="#features">Features</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="#getting-started">Getting started</a> ·
-  <a href="#deployment">Deployment</a> ·
-  <a href="#security">Security</a>
-</p>
-
-> **Project:** `NSKWeb/infocraft-web-`  
-> **Status:** Active development. The web app has a working editor and several AI, export, import and Firebase integration paths. Live behavior depends on provider credentials, Firebase configuration and deployment setup. Read [Feature status](#feature-status) and [Known limitations](#known-limitations) before production use.
-
-InfoCraft Web is an independent browser-based implementation inspired by the original InfoCraft project. It does not replace or automatically modify the original Android repository.
+</div>
 
 ---
 
-## Contents
+## 00 / The idea
 
-- [Overview](#overview)
-- [Product workflow](#product-workflow)
-- [Features](#features)
-- [Feature status](#feature-status)
-- [Interface and design system](#interface-and-design-system)
-- [Architecture](#architecture)
-- [Technology stack](#technology-stack)
-- [Repository structure](#repository-structure)
-- [Getting started](#getting-started)
-- [Environment variables](#environment-variables)
-- [AI and application API](#ai-and-application-api)
-- [Firebase setup](#firebase-setup)
-- [Deployment](#deployment)
-- [CI workflow](#ci-workflow)
-- [Security](#security)
-- [Known limitations](#known-limitations)
-- [Troubleshooting](#troubleshooting)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [Related project](#related-project)
+**InfoCraft** turns dense information into visual communication.
 
----
+Start with pasted notes, article excerpts, metrics, a public webpage, a selectable-text PDF, or an image. InfoCraft uses AI to structure the material into an editorial Swiss-grid infographic, then gives you a canvas to refine its hierarchy, content, and visual direction. A separate poster workflow helps turn a creative brief into an image-led composition.
 
-## Overview
+> Make information easier to understand — without making the design feel ordinary.
 
-InfoCraft helps users turn dense source material into clear, polished infographic compositions. The product combines AI-assisted content creation with a visual editor, export tools and a project workspace.
+InfoCraft Web is the browser-based implementation of the InfoCraft product family. It is maintained separately from the original Android app in [NSKWeb/infocraft-](https://github.com/NSKWeb/infocraft-). The product identity, editorial direction, workflows, templates and palettes are carried forward, while the interface and technical implementation are adapted for the web.
 
-### Product principles
+## 00A / How InfoCraft works
 
-- **Editorial clarity:** strong typography, structured sections and intentional whitespace.
-- **Visual storytelling:** portrait-oriented compositions designed for sharing and publishing.
-- **Editable by design:** generated content should be refinable rather than locked into a flat image.
-- **Dark-first experience:** the studio defaults to a dark interface, with a light appearance option.
-- **Responsive workspace:** layouts adapt to desktop and mobile screens.
-- **Source-aware creation:** imported material and AI-generated claims should be reviewed before publication.
+<div align="center">
+  <img src="public/infocraft/how-it-works.svg" alt="Four-step InfoCraft infographic: bring input, let AI structure it, refine on the canvas, then export, create a poster, or save to the library" width="100%" />
+</div>
 
-### Project boundaries
+**In one glance:** input → AI organization → creative refinement → finished visual.
 
-This repository contains the web implementation. It is developed separately from the original Android app; feature parity is a migration goal, not an assumption.
+- **Bring input:** start with text, URLs, selectable-text PDFs, images, reports, notes, or metrics.
+- **AI structures it:** organize information into a headline, key points, metrics, sections, and takeaways.
+- **Refine the canvas:** choose a layout and palette, edit sections, and adjust the visual hierarchy.
+- **Finish your work:** export the infographic, create a poster, prepare Pinterest metadata, or save the project in your Library.
 
----
+The **AI Art Director** can assist during refinement. Search grounding is an optional context layer for supported workflows.
 
-## Product workflow
+## 01 / The studio
 
-The high-level creation journey is:
+### A focused creative workflow
 
-```mermaid
-flowchart LR
-  A["Source material<br/>Text · URL · PDF · Image"] --> B["Create / AI generation"]
-  B --> C["Structured infographic draft"]
-  C --> D["Editable canvas"]
-  D --> E["Export / publish"]
-  D <--> F["Project Library"]
-  D <--> G["AI Art Director"]
-  B -. "Optional research" .-> H["Google Search grounding"]
-```
-
-1. **Bring in source material.** Start with text or use a supported import path.
-2. **Generate a draft.** The server-side AI workflow can create structured infographic content when configured.
-3. **Refine the composition.** Edit content, arrange sections, and adjust visual choices in the canvas.
-4. **Get creative assistance.** Use the Art Director and Pinterest SEO workflow where configured.
-5. **Save and export.** Use the Library and available image/PDF export paths.
-
-The workflow diagram describes the product experience. Individual integrations still require the setup and verification described below.
-
----
-
-## Features
-
-### 1. Infographic editor
-
-- Editable infographic content and section data
-- Add, remove and reorder sections
-- Undo and redo
-- Layout and palette selection
-- Portrait-oriented canvas preview
-
-### 2. AI-assisted creation
-
-- Gemini-backed server routes for infographic and creative workflows
-- Structured response validation
-- Contextual AI Art Director workflow
-- Pinterest-focused title, description, hashtag and alt-text assistance
-
-### 3. Source intelligence
-
-- Public webpage text import
-- Selectable-text PDF extraction
-- JPG, PNG and WebP image input for vision workflows
-- Optional Google Search grounding and citation extraction
-- Output language choices including English, Hindi, Hinglish and Odia
-
-### 4. Poster and export studio
-
-- Poster-generation API and UI workflow
-- PNG, JPEG and WebP canvas exports
-- Scaled canvas export options (1K / 2K / 4K)
-- Standard portrait and Pinterest-oriented sizing
-- Browser print-to-PDF workflow
-
-### 5. Project workspace
-
-- Google sign-in through Firebase Authentication
-- Owner-scoped Firestore project storage
-- Cloud Library subscription
-- Project-scoped Art Director chat persistence
-- Local browser-storage fallback for signed-out drafts
-
----
-
-## Feature status
-
-This is the consolidated status reference for the web implementation. It supersedes older diagrams, tables and early migration notes that may describe an earlier stage of the project.
-
-| Capability | Current implementation | Setup / verification still needed |
-|---|---|---|
-| Advanced canvas editor | Undo/redo, editable sections, add/remove/reorder, layout and palette controls | Browser interaction and export-fidelity testing |
-| AI infographic generation | Server-side Gemini generation workflow and structured validation | `GEMINI_API_KEY`, supported model access and live test |
-| AI Art Director | Gemini-backed contextual chat workflow | Live provider test and end-to-end browser validation |
-| Pinterest SEO Studio | Pin title, description, hashtags and alt-text generation | Gemini key and output review |
-| Export | PNG, JPEG, WebP, scaled canvas export and print-to-PDF | Cross-browser validation; PDF uses browser print dialog |
-| Poster Studio | Poster UI and image-generation API route | Provider model access and actual output dimensions |
-| Firebase Authentication | Google sign-in integration | Enable Google provider and configure authorized domains |
-| Cloud Library | Firestore project sync with owner-scoped rules | Deploy rules and test with real accounts |
-| Chat persistence | Project-scoped Art Director message persistence | Verify rules and multi-session behavior |
-| URL import | Public HTTP(S) webpage text extraction | Production network controls and rate limiting |
-| PDF import | Selectable-text extraction | OCR for scanned/image-only PDFs is not implemented |
-| Photo understanding | Image input for vision analysis | Live model/key test and upload validation |
-| Search grounding | Optional Google Search grounding and citation extraction | Verify supported model/API combination |
-| Local drafts | Browser localStorage fallback | Browser storage may be cleared or quota-limited |
-| Firebase App Check | Not integrated | Plan and implement before broader public rollout |
-
-**Status language:** “Implemented” means a code path exists in this repository. It does not mean that external credentials, provider access, deployed security rules, hosting or real-browser behavior have been independently verified.
-
----
-
-## Interface and design system
-
-The studio is organized around these work areas:
-
-| Area | Purpose |
+| Workspace | What it does |
 |---|---|
-| **Create** | Start an infographic from source material |
-| **Canvas** | Edit content and visual composition |
-| **Poster Studio** | Prepare poster/image-generation requests |
-| **AI Art Director** | Get contextual creative assistance |
-| **Pinterest SEO Studio** | Prepare social discovery metadata |
-| **Library** | Reopen saved projects |
+| **Create** | Start an infographic from text, URLs, PDFs, or images, with AI-assisted structuring. |
+| **Canvas** | Refine the generated infographic, switch layouts and palettes, edit content, add/remove/reorder sections, and export. |
+| **Poster Studio** | Prepare AI poster requests from the active project, with resolution and aspect-ratio controls. |
+| **AI Art Director** | Ask for editorial improvements and apply supported suggestions back to the canvas. |
+| **Pinterest SEO Studio** | Prepare pin titles, descriptions, hashtags, and image alt text for discovery workflows. |
+| **Library** | Browse saved projects and continue working with their associated content and chat history. |
 
-### Visual direction
+## 02 / Capabilities
 
-- Dark-first studio interface with a light appearance option
-- Minimal, spacious editorial layout
-- Swiss-inspired grid and information hierarchy
-- Responsive controls and canvas preview
-- Image-first output designed for social sharing
+<div align="center">
+  <img src="public/infocraft/feature-grid.svg" alt="InfoCraft creative workspaces and capabilities" width="100%" />
+</div>
 
-### Layouts and palettes
+### From unstructured input to structured visual content
 
-The editor includes layout choices such as KPI Stack, Process Flow, Comparison and Editorial Digest, alongside palettes such as Swiss Vermilion, Cobalt Blueprint, Charcoal Press and Forest Ochre.
+- **Text-to-infographic** — convert notes, reports, metrics, and article excerpts into a structured visual summary.
+- **URL-to-infographic** — import readable text from supported public webpages.
+- **PDF-to-infographic** — extract selectable text from PDF documents and use it as source material.
+- **Photo-to-infographic** — use JPG, PNG, and WebP image input in supported vision workflows.
+- **AI-assisted structure** — generate a title, subtitle, key metric, takeaway, and scannable content sections.
+- **Search grounding** — optionally enrich supported workflows with Google Search context and available source citations.
+- **Editorial refinement** — use the AI Art Director to improve copy, hierarchy, and layout direction.
+- **Pinterest SEO** — generate pin-focused titles, descriptions, hashtags, and alt text.
+- **Canvas export** — export PNG, JPEG, or WebP images, including scaled canvas sizes.
+- **Project library** — persist and revisit infographic projects and their related chat messages through Firebase.
 
-The canvas preview is a browser composition. Validate each layout and export at the target viewport before relying on pixel-perfect output.
+### Four Swiss-grid templates
 
-### Original visual assets
-
-The repository carries visual assets from the original project in `public/infocraft/`:
-
-<p align="center">
-  <img src="public/infocraft/hero-banner.svg" alt="InfoCraft hero artwork" width="100%" />
-</p>
-<p align="center">
-  <img src="public/infocraft/how-it-works.svg" alt="InfoCraft workflow artwork" width="100%" />
-</p>
-<p align="center">
-  <img src="public/infocraft/feature-grid.svg" alt="InfoCraft feature grid artwork" width="100%" />
-</p>
-
----
-
-## Architecture
-
-### System overview
-
-```mermaid
-flowchart TB
-  USER["User"] --> NEXT["Next.js App Router<br/>React studio"]
-  NEXT --> EDITOR["Editor · Create · Poster · Art Director · Library"]
-  EDITOR <--> LOCAL["Browser local draft storage"]
-  EDITOR <--> AUTH["Firebase Authentication"]
-  EDITOR <--> DB["Firestore"]
-  NEXT --> ROUTES["Next.js API routes"]
-  ROUTES --> VALIDATE["Input and schema validation"]
-  VALIDATE --> GEMINI["Google Gemini services"]
-  ROUTES -. "Optional grounding" .-> SEARCH["Google Search grounding"]
-  NEXT --> HEALTH["Health endpoint"]
-```
-
-### Main responsibilities
-
-| Layer | Responsibility |
+| Template | Best suited to |
 |---|---|
-| Next.js / React client | Studio interface, editor interactions, project views and export interactions |
-| Next.js API routes | Server-side AI requests, import processing and health response |
-| Zod schemas | Validate structured data at application boundaries |
-| Gemini | AI generation, creative assistance and supported vision workflows |
-| Firebase Auth | User identity and Google sign-in |
-| Firestore | User-owned projects and project-scoped chat data |
-| Browser storage | Local draft fallback |
-| GitHub Actions | Typecheck, lint and production build validation |
-| Antideploy | Target Node.js hosting environment |
+| **KPI_STACK** | Key numbers, performance indicators, and metric-led summaries |
+| **PROCESS_FLOW** | Ordered stages, workflows, and sequential explanations |
+| **COMPARISON** | Side-by-side differences and competing options |
+| **DIGEST** | Compact editorial summaries and mixed information |
 
-### Request lifecycle
+### Four visual palettes
 
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant B as Browser / Studio
-  participant A as Next.js API
-  participant V as Validator
-  participant G as Gemini
+- **Swiss Vermilion** — warm paper with a sharp editorial accent.
+- **Cobalt Blueprint** — cool, technical, and analytical.
+- **Charcoal Press** — high-contrast, publication-inspired.
+- **Forest Ochre** — restrained natural tones.
 
-  U->>B: Submit source and generation choices
-  B->>A: Send request
-  A->>V: Validate input
-  V-->>A: Validated request
-  A->>G: Request structured output
-  G-->>A: Model response
-  A->>V: Validate generated structure
-  V-->>A: Validated content
-  A-->>B: Return structured result
-  B-->>U: Display editable draft
-```
+### Poster and export controls
 
-The sequence shows the intended server-side generation boundary. Exact request fields and route behavior are defined by the current source code.
+The poster interface exposes **1K, 2K, and 4K** resolution choices and aspect-ratio selection. Canvas export supports **PNG, JPEG, and WebP**, with scaled output options and portrait/Pinterest-oriented sizing. Actual poster output availability and native resolution depend on the configured image-generation model and provider limits.
 
----
+## 03 / Product workflow
 
-## Technology stack
+<div align="center">
+  <img src="public/infocraft/workflow.svg" alt="InfoCraft user workflow from source input to editable canvas and export" width="100%" />
+</div>
+
+1. **Start** with text, a public URL, a selectable-text PDF, or an image.
+2. **Generate** a structured infographic using the configured AI workflow and optional search grounding.
+3. **Refine** its template, palette, headline, sections, and visual hierarchy on the canvas.
+4. **Discuss** improvements with the AI Art Director and apply supported revisions.
+5. **Prepare** Pinterest metadata or create a poster when the project is ready for an image-led treatment.
+6. **Save or export** your work and revisit saved projects in the Library.
+
+The diagram describes the intended product journey. Individual integrations require the setup and verification described below.
+
+## 04 / Architecture
+
+InfoCraft Web uses a Next.js application with a browser-based React studio, server-side API routes, schema validation, Firebase services, and external AI services.
+
+### Technology
 
 | Layer | Technology |
 |---|---|
+| Platform | Web |
 | Framework | Next.js 15 App Router |
 | UI | React 19 |
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS 4 tooling and component-level CSS |
+| State and validation | React state, shared TypeScript types, Zod |
+| AI integration | Google Gemini through server-side API routes |
+| Authentication | Firebase Authentication, Google sign-in |
+| Project and chat data | Cloud Firestore |
+| Local draft storage | Browser localStorage |
 | Icons | Lucide React |
-| Schema validation | Zod |
-| AI provider | Google Generative AI SDK / Gemini |
-| Authentication and data | Firebase Web SDK, Firebase Auth and Firestore |
-| Runtime | Node.js 20.9+ |
+| Build and runtime | Node.js 20.9+ |
 | CI | GitHub Actions |
 | Hosting target | Antideploy Node.js service |
 
----
+### Source map
 
-## Repository structure
-
-The following is a high-level map of the main application areas. Some implementation files may evolve as features are added.
-
-```text
+~~~text
 infocraft-web-/
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── docs/
-│   └── ANTIDEPLOY.md
 ├── public/
-│   └── infocraft/                 # Reused SVG artwork
+│   └── infocraft/              # Original InfoCraft visual assets
 ├── src/
 │   ├── app/
-│   │   ├── api/                   # Server-side API routes
+│   │   ├── api/                # AI, import, poster and health API routes
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx
-│   ├── components/                # Studio and UI components
-│   └── lib/                       # Firebase, schemas and shared types
+│   ├── components/             # Studio, editor and UI components
+│   └── lib/                    # Firebase, schemas and shared utilities
+├── docs/
+│   └── ANTIDEPLOY.md
+├── firestore.rules
 ├── .env.example
-├── eslint.config.mjs
-├── next.config.ts
 ├── package.json
-├── postcss.config.mjs
-├── tsconfig.json
 └── README.md
-```
+~~~
 
-For the exact current file list, inspect the repository tree on the `main` branch.
+The repository tree is the source of truth for exact file names; this is a high-level map of the main application areas.
 
----
+### Web implementation notes
 
-## Getting started
+- The **browser** owns the interactive studio, editor state, canvas rendering, client-side exports, and local draft fallback.
+- **Next.js API routes** handle server-side AI requests and supported import processing.
+- **Zod** validates request and generated data at application boundaries.
+- **Firebase Authentication** provides Google sign-in; **Firestore** stores user-owned projects and project-scoped chat data.
+- **Gemini** powers configured infographic and creative-assistance workflows.
+- **Google Search grounding** is optional and only available for supported model/API combinations.
+
+## 05 / Getting started
 
 ### Requirements
 
-- Node.js 20.9 or newer (Node.js 20 LTS recommended)
-- npm
-- Git
+- Node.js **20.9 or newer** (Node.js 20 LTS recommended).
+- npm.
+- Git.
+- Firebase and Gemini configuration for the integrations you want to use.
 
-### 1. Clone the repository
+### 1. Clone the web repository
 
-```bash
+~~~bash
 git clone https://github.com/NSKWeb/infocraft-web-.git
 cd infocraft-web-
-```
+~~~
 
 ### 2. Install dependencies
 
-```bash
+~~~bash
 npm install
-```
+~~~
 
-If a package lockfile is present and committed, use `npm ci` for reproducible installs. If no lockfile is present, `npm install` resolves dependencies and generates one.
+When a committed lockfile is available, use `npm ci` for reproducible installs.
 
 ### 3. Configure environment
 
-```bash
+~~~bash
 cp .env.example .env.local
-```
+~~~
 
 Add the credentials for the integrations you want to run. Keep `.env.local` private and never commit it.
 
 ### 4. Start the development server
 
-```bash
+~~~bash
 npm run dev
-```
+~~~
 
 Open [http://localhost:3000](http://localhost:3000).
 
 ### 5. Run validation
 
-```bash
+~~~bash
 npm run typecheck
 npm run lint
 npm run build
-```
+~~~
 
 Run the production server locally with:
 
-```bash
+~~~bash
 npm run start
-```
+~~~
 
----
+> A successful local build does not by itself confirm that Gemini generation, Firebase sign-in, Firestore access, Search grounding, URL import, or poster generation is correctly configured. Test each integration separately.
 
-## Environment variables
+## 06 / Configuration and security notes
 
-Copy `.env.example` to `.env.local`. The exact variables consumed by the current code should be checked in `.env.example` and the relevant integration modules.
+- **Gemini:** set `GEMINI_API_KEY` as a server-side environment secret. Never expose it through a `NEXT_PUBLIC_*` variable.
+- **Firebase Authentication:** enable the Google provider and configure authorized domains for local and deployed environments.
+- **Firestore:** review and deploy the repository's `firestore.rules`; verify owner-scoped access with separate test accounts.
+- **Source imports:** treat webpage text, PDF content, image input, and generated output as untrusted material.
+- **Search grounding:** verify that the selected model and API configuration support the feature before enabling it.
+- **App Check:** Firebase App Check is not integrated in this web implementation.
+- **Provider limits:** confirm model availability, quotas, pricing, and regional support before production usage.
+- **Publishing:** review generated facts, numerical claims, and citations against their original sources before sharing.
 
-| Variable | Purpose | Visibility |
-|---|---|---|
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase web app configuration | Browser-visible |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth domain | Browser-visible |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project identifier | Browser-visible |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase app identifier | Browser-visible |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Optional Firebase Storage configuration | Browser-visible |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Optional Firebase messaging configuration | Browser-visible |
-| `GEMINI_API_KEY` | Server-side Gemini requests | **Secret; server only** |
-| `PORT` | Hosting runtime port | Server runtime |
+## 07 / Feature status and known limitations
 
-Firebase web configuration values are intended for browser clients; they are not authorization controls. Firestore Security Rules and appropriate authentication checks must protect user data. Never prefix a provider secret with `NEXT_PUBLIC_`.
+InfoCraft Web is an evolving browser-based implementation. This table describes code paths present in the repository; it does not claim that external services or production deployments have been independently verified.
 
----
+| Area | Repository evidence / current status |
+|---|---|
+| Web studio and navigation | Present |
+| Editable canvas | Undo/redo, editable sections, add/remove/reorder, layout and palette controls |
+| AI infographic generation | Gemini-backed server workflow; requires `GEMINI_API_KEY` and supported model access |
+| AI Art Director | Gemini-backed contextual workflow; live provider test still required |
+| Pinterest SEO Studio | Generation workflow implemented; requires Gemini configuration and output review |
+| Canvas export | PNG, JPEG, WebP and scaled export options; cross-browser validation still needed |
+| PDF export | Uses browser print dialog; not a server-generated PDF pipeline |
+| Poster Studio | UI and image-generation API route present; provider output dimensions are not guaranteed |
+| Firebase Authentication | Google sign-in integration present; provider/domain configuration required |
+| Cloud Library | Firestore project sync and owner-scoped rules present; deploy and test rules |
+| Chat persistence | Project-scoped Art Director message persistence present; verify multi-session behavior |
+| URL import | Public HTTP(S) webpage text extraction present; production network controls and rate limiting needed |
+| PDF import | Selectable-text extraction; scanned/image-only PDF OCR is not implemented |
+| Photo understanding | Image input for vision analysis; live model/key test required |
+| Search grounding | Optional workflow; verify supported model/API combination |
+| Local drafts | Browser localStorage fallback; storage may be cleared or quota-limited |
+| Firebase App Check | Not integrated |
 
-## AI and application API
+### Important operational caveats
 
-The application includes server-side routes for AI-assisted workflows. Route names, accepted fields and response contracts can change with implementation; inspect the relevant `src/app/api/` route before integrating another client.
+- **URL import hardening:** before exposing the importer to untrusted public traffic, add connection-level DNS pinning or equivalent egress controls and production rate limiting. URL/IP checks, redirect restrictions, timeouts, and response-size limits alone are not a complete production SSRF defense.
+- **Poster output dimensions:** selecting 1K/2K/4K does not guarantee that the provider returns an image at those exact native pixel dimensions.
+- **Scanned PDFs:** OCR for image-only or scanned PDFs is not included.
+- **Browser validation:** code paths existing in the repository do not prove that all browser workflows, provider integrations, Firestore rules, and deployment settings have passed live tests.
+- **Local drafts:** browser storage may be cleared, restricted, or quota-limited.
 
-### Gemini configuration
+## 08 / Deployment
 
-1. Create or select a Google AI project.
-2. Generate an API key.
-3. Set it as `GEMINI_API_KEY` in the local or hosting environment.
-4. Restart or redeploy after changing the secret.
-5. Verify that the configured project has access to the requested model and capabilities.
-
-The application uses structured output validation for supported generation workflows. Model availability, rate limits, grounding support and image-generation behavior are controlled by the provider and can change.
-
-### Health endpoint
-
-`GET /api/health`
-
-This endpoint is intended to confirm that the Next.js process responds. A healthy response does **not** prove that Gemini, Firebase, Firestore or other external services are reachable or correctly configured.
-
----
-
-## Firebase setup
-
-Firebase integrations require project-side configuration in addition to environment variables.
-
-1. Create or select a Firebase project.
-2. Register a Web App and copy its configuration into the matching `NEXT_PUBLIC_FIREBASE_*` variables.
-3. Enable **Google** in Firebase Authentication providers.
-4. Add the deployed hostname to Firebase Authentication's authorized domains.
-5. Review and deploy the repository's `firestore.rules` to the same Firebase project.
-6. Test sign-in, project creation, read/update/delete behavior and cross-user access with separate test accounts.
-
-Do not deploy permissive Firestore rules. Verify that each user can access only their own documents and that project-scoped chat data follows the same ownership boundary.
-
----
-
-## Deployment
-
-The project is intended to run as a standard Next.js application on a Node.js hosting service.
+The web project is intended to run as a standard Next.js application on a Node.js hosting service.
 
 ### Antideploy settings
 
@@ -450,157 +284,46 @@ The project is intended to run as a standard Next.js application on a Node.js ho
 
 ### Deployment checklist
 
-1. Connect the web repository, not the original Android repository.
+1. Connect **`infocraft-web-`**, not the original Android repository.
 2. Select the intended branch and Node.js runtime.
 3. Configure required environment variables as hosting secrets.
-4. Confirm the start command binds to `0.0.0.0` and honors the platform-provided `PORT`.
+4. Confirm the server binds to `0.0.0.0` and honors the platform-provided `PORT`.
 5. Deploy and inspect build logs.
 6. Open `/api/health`.
-7. Test sign-in, cloud saves, AI generation, import and exports separately in the deployed browser.
+7. Test sign-in, cloud saves, AI generation, imports, and exports separately in the deployed browser.
 
 See [docs/ANTIDEPLOY.md](docs/ANTIDEPLOY.md) for repository-specific hosting notes.
 
 A successful build or health response is not a substitute for end-to-end production verification.
 
----
+## 09 / Contributing
 
-## CI workflow
+This repository is currently maintained separately from the original Android project. If you have access and want to contribute:
 
-The GitHub Actions workflow is located at `.github/workflows/ci.yml`. It is configured to validate changes through the repository's automated checks.
-
-The documented validation sequence is:
-
-1. Check out the repository.
-2. Set up Node.js 20.
-3. Install dependencies.
-4. Run TypeScript type checking.
-5. Run ESLint.
-6. Build the Next.js application.
-
-Check the repository's **Actions** tab for the actual status of the latest workflow run. This README does not assert that the latest run is currently passing.
-
----
-
-## Security
-
-Security is especially important because the application accepts user-provided source material and communicates with external AI and data services.
-
-- Keep API keys, tokens and credentials out of source code and commit history.
-- Keep Gemini and other provider secrets on the server; never expose them through `NEXT_PUBLIC_*`.
-- Do not ship Firebase Admin credentials or service-account JSON to the browser.
-- Use restrictive, owner-scoped Firestore Security Rules.
-- Validate incoming requests and generated structured content.
-- Treat imported documents, webpage content and model output as untrusted input.
-- Apply upload type, size and content limits before processing files.
-- Avoid returning raw provider errors or sensitive diagnostics to end users.
-- Add rate limiting and abuse controls to public AI and import endpoints.
-- Review dependency updates and GitHub Actions permissions regularly.
-
-Report security issues privately to the repository maintainers. Do not publish credentials, personal data or exploit details in public issues.
-
----
-
-## Known limitations
-
-These are important implementation and operational caveats:
-
-- **Provider verification:** code paths for Gemini workflows require a valid key, model access and live testing.
-- **Poster output:** requested resolution does not guarantee that the provider returns an image at those exact native pixel dimensions.
-- **PDF export:** the current PDF workflow uses the browser print dialog; it is not a server-generated PDF file.
-- **Scanned PDFs:** PDF import extracts selectable text. OCR for image-only/scanned PDFs is not included.
-- **URL import:** the importer is intended for public HTTP(S) text/HTML pages. It is not a general-purpose crawler and does not bypass paywalls or authentication.
-- **URL-import hardening:** the current importer includes URL/IP checks, redirect restrictions, a timeout and response-size limits. Before exposing it to untrusted public traffic, add connection-level DNS pinning or equivalent egress controls and production rate limiting.
-- **Firebase App Check:** not integrated in this web implementation.
-- **Browser verification:** repository code being present does not prove that all browser workflows, provider integrations, Firestore rules or deployment settings have passed live tests.
-- **Local drafts:** browser storage may be cleared, restricted or quota-limited.
-
-Review AI-generated facts, numerical claims and citations against their source before publishing.
-
----
-
-## Troubleshooting
-
-### Dependency installation or build fails
-
-- Confirm Node.js is 20.9 or newer.
-- Run `npm install`, or `npm ci` when a valid committed lockfile is available.
-- Review the first meaningful error in the output rather than only the final failure line.
-- Run typecheck and lint independently to isolate failures.
-
-### The deployed app does not start
-
-- Confirm the Node.js runtime and `npm run start` command.
-- Ensure the server binds to `0.0.0.0`.
-- Confirm that the platform-provided `PORT` is honored.
-- Inspect the deployment's runtime logs.
-
-### Gemini requests fail
-
-- Confirm `GEMINI_API_KEY` is set as a server-side secret.
-- Redeploy or restart after changing environment variables.
-- Check model availability, project permissions, quotas and provider status.
-- Inspect server logs without exposing secrets to users.
-
-### Google sign-in fails
-
-- Confirm the Firebase web configuration matches the intended project.
-- Enable Google as an Authentication provider.
-- Add the deployed hostname to Authorized domains.
-- Check browser console and Firebase Authentication errors.
-
-### Cloud Library operations fail
-
-- Confirm Firestore is enabled in the correct Firebase project.
-- Deploy the repository's current Firestore rules.
-- Verify that the user is signed in and that the document ownership matches the rules.
-- Test with a separate account to confirm cross-user isolation.
-
-### Deployed changes are missing
-
-- Confirm the deployment used the intended repository, branch and commit.
-- Review build logs and deployment status.
-- Trigger a new deployment after environment changes when required.
-
----
-
-## Roadmap
-
-The following are improvement areas, not promises of a specific release date:
-
-- [ ] Complete end-to-end browser testing for all editor and export flows
-- [ ] Verify Gemini integrations against supported live models
-- [ ] Add robust retries, rate limiting and user-friendly AI error states
-- [ ] Complete security review of import and upload endpoints
-- [ ] Add Firebase App Check and review abuse controls
-- [ ] Add OCR support for scanned PDFs
-- [ ] Improve accessibility and keyboard navigation
-- [ ] Add automated tests for critical project, auth and export workflows
-- [ ] Validate deployment behavior and performance under realistic usage
-
----
-
-## Contributing
-
-1. Create a focused feature branch from `main`.
-2. Keep pull requests scoped and explain user-visible behavior changes.
+1. Create a focused branch from `main`.
+2. Keep changes scoped and describe the user-visible impact.
 3. Document new environment variables and setup requirements.
-4. Run typecheck, lint and build before opening a pull request.
-5. Never commit real credentials, private user data or generated secrets.
+4. Run typecheck, lint, and build before opening a pull request.
+5. Test affected workflows in a browser and state which integrations were not tested.
 6. Include screenshots or short recordings for interface changes.
-7. State which checks were run and which integrations were not tested.
+7. Never include credentials, tokens, signing keys, or private user data.
 
----
-
-## Related project
+## 10 / Related project
 
 - **Web implementation:** [NSKWeb/infocraft-web-](https://github.com/NSKWeb/infocraft-web-)
-- **Original project:** [NSKWeb/infocraft-](https://github.com/NSKWeb/infocraft-)
+- **Original Android project:** [NSKWeb/infocraft-](https://github.com/NSKWeb/infocraft-)
 
-The two repositories are maintained independently. A change in the web repository does not automatically update the original project.
+The projects share the InfoCraft product identity, visual language, core workflows, templates, and palettes. They use different platform implementations and are maintained independently; changes do not automatically sync between repositories.
+
+## 11 / License
+
+InfoCraft Web is licensed under the **MIT License**. See the [`LICENSE`](LICENSE) file for the complete license text.
+
+The license applies to code and materials owned by the project copyright holder. Third-party libraries, services, trademarks, and assets remain subject to their respective licenses and terms.
 
 ---
 
-<p align="center">
-  <strong>InfoCraft</strong><br/>
-  <sub>Clarity, composed.</sub>
-</p>
+<div align="center">
+  <img src="public/infocraft/footer.svg" alt="InfoCraft — clarity, composed." width="100%" />
+  <sub>Built around clarity. Designed with intention. Powered by AI.</sub>
+</div>
