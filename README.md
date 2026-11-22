@@ -15,7 +15,7 @@
 
 **InfoCraft Web** is a separate web implementation inspired by the InfoCraft product. It lives in its own repository and does not replace or modify the original `NSKWeb/infocraft-` project.
 
-> **Project status:** Early development / functional UI foundation. The studio interface, editable infographic preview, local session library, PNG export path, health endpoint and AI API route are present. Several integrations and production workflows are not yet implemented. See [Feature status](#feature-status) before treating this as production-ready.
+> **Project status:** Feature-parity migration in progress. Original InfoCraft visual assets are now included, the Create screen calls the Gemini API route, and the studio includes the editable canvas, local session library, PNG export path and health endpoint. Authentication, cloud persistence, photo understanding, live Art Director, poster generation and search grounding remain to be migrated. See [Feature status](#feature-status) before treating this as production-ready.
 
 ---
 
@@ -65,7 +65,7 @@ flowchart LR
     C --> D["🎨 Editable canvas"]
     D --> E["🖼️ PNG export"]
     D -. "Later: cloud save" .-> F["☁️ Library sync"]
-    B -. "AI route exists; UI wiring pending" .-> G["🤖 Gemini API"]
+    B --> G["🤖 Gemini API"]
     style A fill:#eee9df,stroke:#c8bca9,color:#242424
     style B fill:#f7d9cf,stroke:#d94c36,color:#242424
     style C fill:#eee9df,stroke:#c8bca9,color:#242424
@@ -73,7 +73,7 @@ flowchart LR
     style E fill:#dcebdd,stroke:#6c9a73,color:#242424
 ```
 
-**In plain language:** provide information → create a draft → refine the layout → export the visual. The dotted connections are future or not-yet-wired integrations, not finished features.
+**In plain language:** provide information → create a draft → refine the layout → export the visual. Cloud save remains a future integration; Gemini generation is now connected from Create when the server key is configured.
 
 ### 2. How the current app is organized
 
@@ -94,7 +94,7 @@ flowchart TB
     style FIREBASE fill:#f4edcf,stroke:#b69c43,color:#202020
 ```
 
-**What this means:** the browser renders the studio; the Next.js server exposes API routes; the AI route validates structured output. Firebase is currently only an initialization helper. The Create screen still makes a local fallback draft rather than calling the AI route.
+**What this means:** the browser renders the studio; the Next.js server exposes API routes; the AI route validates structured output. Firebase is currently only an initialization helper. The Create screen now calls the Gemini route when GEMINI_API_KEY is configured. Firebase is still only an initialization helper.
 
 ### 3. The five workspace areas
 
@@ -205,31 +205,35 @@ The current preview is a front-end composition. Do not assume every layout selec
 
 ## Feature status
 
-This table intentionally separates working interface behavior from planned integrations.
+The original Android app is the product source of truth. This web repository is a separate implementation, not a different product. The migration target is the complete original capability set, adapted to browser workflows.
 
-| Capability | Status | Notes |
+| Original InfoCraft capability | Web status | Migration target |
 |---|---|---|
-| Responsive studio shell | Implemented | Desktop and mobile layouts |
-| Dark / light appearance | Implemented | Dark is the default |
-| Text input and starter examples | Implemented | Local UI |
-| Local structured draft | Implemented | Deterministic fallback; not AI-generated |
-| Editable canvas fields | Implemented | Headline, subtitle and hero metric |
-| Template and palette selection | Implemented | Visual selection controls |
-| Browser-session Library | Implemented | State is not persisted across reloads |
-| PNG export | Implemented | Verify output on target browsers before production |
-| Health endpoint | Implemented | Reports application process health only |
-| Gemini server route | Present, requires verification | Configure key and test end-to-end; the current Create UI uses its local fallback |
-| Firebase initialization helper | Present | Not yet wired into authentication or cloud persistence |
-| Firebase Authentication | Planned | Not implemented in the current UI |
-| Firestore project persistence | Planned | Not implemented |
-| Photo-to-infographic understanding | Planned | Image upload currently selects a file only |
-| Live AI Art Director | Planned | Current replies are static guidance |
-| AI poster/image generation | Planned | Controls and workflow are not fully connected |
-| Google Search grounding and citations | Planned | No live grounding flow currently |
-| User accounts and cross-device sync | Planned | Requires Firebase integration and security rules |
+| Text-to-infographic | Connected, needs live-key verification | Preserve source text, structured sections, hero metric and selected template |
+| Generation modes: Instant Draft / Deep Synthesis | Partial | Add explicit FAST and HIGH_THINKING model selection |
+| Photo Scan / photo-to-infographic | Not implemented | Upload image securely and send vision input to the server-side model |
+| Google Search grounding | Not implemented | Add opt-in grounding, source URLs and citation display |
+| Four Swiss-grid templates | Partial | KPI Stack, Process Flow, Comparison and Editorial Digest renderers |
+| Four visual palettes | Implemented as choices | Match original palette tokens in every renderer and export |
+| Editable infographic canvas | Partial | Edit all project fields and section data, not only headline/subtitle/hero metric |
+| AI Art Director | UI present; static replies | Live contextual chat, streamed response and structured apply-to-canvas patches |
+| Poster generation | Controls only | Real image generation with 1K/2K/4K and 3:4, 9:16, 1:1, 16:9 ratios |
+| Project Library | Browser session only | Firestore-backed projects, live updates, reopen, delete and cross-device sync |
+| Chat history per project | Not implemented | Persist messages under each infographic |
+| Google authentication | Not implemented | Firebase Auth / Google sign-in |
+| PNG export and share | PNG path present | Validate export fidelity, responsive rendering and browser download/share |
+| App Check / secure data access | Not implemented | Web-compatible App Check strategy and owner-only Firestore rules |
+| Original visual identity and diagrams | Added | Reuse original SVG artwork and retain editorial Swiss-grid style |
 
-A successful build or healthy HTTP response does **not** verify the integrations marked present or planned.
+**Important:** the original Android repository documents these capabilities in its README and implements the native workflows in Kotlin/Jetpack Compose. Web status above is based on the current web source code, not assumed from the Android implementation. Do not treat planned or partial rows as shipped.
 
+### Original InfoCraft visual language
+
+The following artwork is carried over from the original repository into `public/infocraft/` and reused in the web studio:
+
+<p align="center"><img src="public/infocraft/hero-banner.svg" alt="Original InfoCraft hero artwork" width="100%"/></p>
+<p align="center"><img src="public/infocraft/how-it-works.svg" alt="Original InfoCraft workflow artwork" width="100%"/></p>
+<p align="center"><img src="public/infocraft/feature-grid.svg" alt="Original InfoCraft feature grid artwork" width="100%"/></p>
 ## Technology stack
 
 | Layer | Technology |
