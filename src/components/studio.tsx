@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from "firebase/auth";
-import { collection, deleteDoc, doc, onSnapshot, orderBy, query, setDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, setDoc } from "firebase/firestore";
 import { auth, db, firebaseConfigured, googleProvider } from "@/lib/firebase";
 import {
   ArrowDownToLine, ArrowRight, BookOpen, Check, Plus, Undo2, Redo2, Trash2, ChevronUp, ChevronDown,
@@ -77,6 +77,31 @@ export default function Studio() {
   const [socialCopy, setSocialCopy] = useState("");
   const current = useMemo(() => library.find(p=>p.id===project.id) || project,[library,project]);
   useEffect(() => { if (!auth) return; return onAuthStateChanged(auth, setUser); }, []);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("infocraft-library-v1");
+      if (saved) {
+        const parsed = JSON.parse(saved) as InfographicProject[];
+        if (Array.isArray(parsed)) setLibrary(parsed);
+      }
+    } catch { setNotice("Local drafts could not be restored. You can continue in this session."); }
+  }, []);
+  useEffect(() => {
+    if (user) return;
+    try { window.localStorage.setItem("infocraft-library-v1", JSON.stringify(library.slice(0, 50))); }
+    catch { setNotice("Local storage is full. Remove older drafts or sign in for cloud sync."); }
+  }, [library, user]);
+  useEffect(() => {
+    if (!user || !db || !project.id) return;
+    let active = true;
+    getDoc(doc(db, "users", user.uid, "chats", project.id)).then(snapshot => {
+      if (!active) return;
+      const messages = snapshot.data()?.messages;
+      if (Array.isArray(messages)) setChat(messages.filter((item): item is {role:"user"|"assistant";text:string} => item && (item.role === "user" || item.role === "assistant") && typeof item.text === "string").slice(-100));
+      else setChat([{role:"assistant",text:"I’m your InfoCraft Art Director. Share a goal and I’ll help sharpen the story, hierarchy, and layout."}]);
+    }).catch(() => { if (active) setNotice("Could not load this project's cloud chat."); });
+    return () => { active = false; };
+  }, [user, project.id]);
   useEffect(() => { if (!user || !db) return; const q = query(collection(db, "users", user.uid, "projects"), orderBy("updatedAt", "desc")); return onSnapshot(q, snap => setLibrary(snap.docs.map(item => item.data() as InfographicProject)), error => setNotice(error.message)); }, [user]);
 
   function commitProject(next: InfographicProject) {
@@ -140,7 +165,7 @@ export default function Studio() {
   }
   async function save() {
     const owned = { ...project, userId: user?.uid };
-    setLibrary(list => [owned, ...list.filter(p=>p.id!==project.id)]);
+    setLibrary(list => [owned, ...list.filter(p=>p.id!==project.id)].slice(0, 50));
     if (user && db) { try { await setDoc(doc(db, "users", user.uid, "projects", project.id), owned); setNotice("Project synced to your cloud Library."); } catch (error) { setNotice(error instanceof Error ? error.message : "Cloud save failed."); } } else setNotice("Saved locally for this session. Sign in to sync across devices.");
   }
   async function signIn() { if (!auth) { setNotice("Add Firebase web configuration to enable Google sign-in."); return; } try { await signInWithPopup(auth, googleProvider); } catch (error) { setNotice(error instanceof Error ? error.message : "Sign-in failed."); } }
@@ -276,7 +301,7 @@ export default function Studio() {
   async function sendChat() {
     if (!chatInput.trim()) return;
     const message=chatInput.trim(); setChat(c=>[...c,{role:"user",text:message}]); setChatInput("");
-    try { const response=await fetch("/api/ai/director",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message,project,history:chat.slice(-8)})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setChat(c=>[...c,{role:"assistant",text:data.reply}]); } catch(error) { setChat(c=>[...c,{role:"assistant",text:error instanceof Error?error.message:"Art Director is unavailable."}]); }
+    try { const response=await fetch("/api/ai/director",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message,project,history:chat.slice(-8)})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setChat(c=>{ const updated=[...c,{role:"assistant" as const,text:data.reply}].slice(-100); if(user&&db) void setDoc(doc(db,"users",user.uid,"chats",project.id),{projectId:project.id,messages:updated,updatedAt:Date.now()},{merge:true}).catch(()=>setNotice("Assistant reply could not sync to cloud chat.")); return updated; }); } catch(error) { setChat(c=>[...c,{role:"assistant",text:error instanceof Error?error.message:"Art Director is unavailable."}]); }
   }
   async function importPdf(file: File) { const form=new FormData(); form.append("file",file); try { const response=await fetch("/api/import/pdf",{method:"POST",body:form}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setSource(data.text); setSourceName(file.name+" · "+data.pages+" pages"); setNotice("PDF text extracted. Review before generating."); } catch(error) { setNotice(error instanceof Error?error.message:"PDF import failed."); } }
   async function importUrl() { if (!urlInput.trim()) return; try { const response=await fetch("/api/import/url",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:urlInput.trim()})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setSource(data.text); setSourceName(data.title||"Imported webpage"); setNotice("Webpage imported. Review source text before generating."); } catch(error) { setNotice(error instanceof Error?error.message:"URL import failed."); } }
