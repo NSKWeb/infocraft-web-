@@ -13,15 +13,6 @@ const firebaseConfig = {
 
 const required = ["apiKey", "authDomain", "projectId", "appId"] as const;
 export const firebaseConfigured = required.every((key) => Boolean(firebaseConfig[key]));
-
-let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-let db: Firestore | null = null;
-
-if (typeof window !== "undefined" && firebaseConfigured) {
-  app = getApps()[0] ?? initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-}
-
-export { app, auth, db };
+export const app: FirebaseApp | null = firebaseConfigured ? (getApps()[0] ?? initializeApp(firebaseConfig)) : null;
+export const auth: Auth | null = app ? getAuth(app) : null;
+export const db: Firestore | null = app ? getFirestore(app) : null;
