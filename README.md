@@ -596,3 +596,41 @@ The web implementation now includes the following integration paths. External cr
 6. Run the CI workflow and complete browser-level tests with real Firebase and Gemini credentials before production use.
 
 The URL importer accepts public HTTP(S) HTML/plain-text pages only. It is not a general-purpose crawler and does not bypass paywalls or authentication. Review imported and AI-generated content, especially citations and numeric claims, before publishing.
+
+
+---
+
+## Current implementation snapshot (22 November 2026)
+
+The implementation has moved beyond the original foundation described in the early diagrams above. Treat this section as the current status; older introductory diagrams and tables are historical snapshots.
+
+| Capability | Current web implementation | Remaining verification |
+|---|---|---|
+| Advanced canvas editor | Undo/redo, editable section content, add/remove/reorder, layout and palette controls | Browser interaction and export fidelity |
+| AI Art Director | Gemini-backed contextual chat route and Pinterest SEO copy workflow | Requires `GEMINI_API_KEY` and live provider test |
+| Pinterest SEO Studio | Pin title/description/hashtags/alt-text generation workflow | Requires Gemini key |
+| Export | PNG, JPEG, WebP, print-to-PDF; 1K/2K/4K canvas scaling; standard 4:5 and Pinterest 2:3 | PDF uses browser print dialog; validate browser-specific output |
+| Poster Studio | Image-generation API route and poster UI | Provider model access and native output dimensions are not guaranteed |
+| Firebase | Google sign-in, owner-scoped Firestore project Library and project-scoped Art Director chat persistence | Configure Firebase web app, enable Google provider, deploy rules, test security |
+| Source import | URL text extraction, selectable-text PDF extraction, JPG/PNG/WebP photo input | Scanned PDF OCR is not included |
+| Search grounding | Opt-in Google Search grounding and citation extraction in generation response | Verify supported model/API combination with a live key |
+| Local drafts | Browser localStorage Library fallback when signed out | Browser storage can be cleared or quota-limited |
+
+### Setup still required
+
+1. Set `GEMINI_API_KEY` as a server-only environment variable in the deployment environment.
+2. Configure the Firebase web app variables: `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, and `NEXT_PUBLIC_FIREBASE_APP_ID`. Optional storage/messaging variables may also be supplied.
+3. Enable Google as a Firebase Authentication provider and add the deployed hostname to Firebase authorized domains.
+4. Deploy `firestore.rules` to the Firebase project before enabling cloud saves.
+5. Run the repository's CI checks and test the deployed app with real Firebase/Gemini credentials.
+
+### Known limitations and security notes
+
+- The URL importer rejects private/reserved IP targets after DNS resolution, disallows redirects, applies a timeout, and caps downloaded response data. It is still an MVP network importer; before opening it to untrusted public traffic, add connection-level DNS pinning/egress controls and production rate limiting.
+- PDF import extracts selectable text only. Image-only/scanned PDFs require OCR, which is not implemented.
+- The poster API accepts a requested resolution but does not force the image provider to return a particular native pixel size. Verify the selected image model is available for the configured Google AI project.
+- PDF export opens the browser print dialog; it is not a server-generated PDF file.
+- Firestore chat messages are stored per signed-in user and project. Cloud access depends on deploying the included owner-scoped rules.
+- Firebase App Check has not been integrated in this web pass.
+- A code change being present in GitHub does not prove the external provider, Firebase rules, deployment, or browser workflow has passed a live test.
+
