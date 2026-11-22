@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
-  ArrowDownToLine, ArrowRight, BookOpen, Check, Plus,
+  ArrowDownToLine, ArrowRight, BookOpen, Check, Plus, Undo2, Redo2, Trash2, ChevronUp, ChevronDown,
   FileImage, FolderOpen, ImagePlus, LayoutDashboard, LoaderCircle, MessageCircle,
   Moon, Search, Settings2, Sparkles, Sun, WandSparkles, X
 } from "lucide-react";
@@ -50,6 +50,8 @@ export default function Studio() {
   const [source, setSource] = useState("");
   const [project, setProject] = useState<InfographicProject>(demoProject);
   const [library, setLibrary] = useState<InfographicProject[]>([]);
+  const [past, setPast] = useState<InfographicProject[]>([]);
+  const [future, setFuture] = useState<InfographicProject[]>([]);
   const [notice, setNotice] = useState("Welcome to your creative studio");
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -63,7 +65,30 @@ export default function Studio() {
   const [sourceName, setSourceName] = useState("");
   const current = useMemo(() => library.find(p=>p.id===project.id) || project,[library,project]);
 
-  function updateProject(patch: Partial<InfographicProject>) { setProject(p=>({...p,...patch,updatedAt:Date.now()})); }
+  function commitProject(next: InfographicProject) {
+    setPast(items => [...items.slice(-49), project]);
+    setFuture([]);
+    setProject({ ...next, updatedAt: Date.now() });
+  }
+  function updateProject(patch: Partial<InfographicProject>) { commitProject({ ...project, ...patch }); }
+  function updateSection(index: number, patch: Partial<InfographicSection>) {
+    commitProject({ ...project, sections: project.sections.map((section, i) => i === index ? { ...section, ...patch } : section) });
+  }
+  function addSection() {
+    if (project.sections.length >= 12) { setNotice("A design can contain up to 12 sections."); return; }
+    const index = project.sections.length + 1;
+    commitProject({ ...project, sections: [...project.sections, { indexLabel: String(index).padStart(2, "0"), heading: "New insight", summary: "Add a concise explanation for this section.", metricValue: String(index).padStart(2, "0"), metricUnit: "Key insight", barRatio: .55 }] });
+    setNotice("New section added.");
+  }
+  function removeSection(index: number) { commitProject({ ...project, sections: project.sections.filter((_, i) => i !== index).map((section, i) => ({ ...section, indexLabel: String(i + 1).padStart(2, "0") })) }); }
+  function moveSection(index: number, direction: -1 | 1) {
+    const target = index + direction;
+    if (target < 0 || target >= project.sections.length) return;
+    const sections = [...project.sections]; [sections[index], sections[target]] = [sections[target], sections[index]];
+    commitProject({ ...project, sections: sections.map((section, i) => ({ ...section, indexLabel: String(i + 1).padStart(2, "0") })) });
+  }
+  function undo() { const previous = past[past.length - 1]; if (!previous) return; setFuture(items => [project, ...items]); setPast(items => items.slice(0, -1)); setProject(previous); setNotice("Last edit undone."); }
+  function redo() { const next = future[0]; if (!next) return; setPast(items => [...items, project]); setFuture(items => items.slice(1)); setProject(next); setNotice("Edit restored."); }
   async function generate() {
     if (!source.trim()) { setNotice("Add some source text first."); return; }
     setGenerating(true); setNotice("Structuring your information…");
@@ -263,11 +288,11 @@ export default function Studio() {
           <div className="below-note"><span>EDITORIAL BY DESIGN</span><span>SWISS GRID / SYSTEM 01</span><span>BUILT FOR CLARITY</span></div>
         </section>}
 
-        {active==="canvas"&&<section className="page canvas-page"><div className="page-heading"><div><div className="eyebrow">02 / EDITORIAL CANVAS</div><h1>Shape the <em>story.</em></h1><p className="lede">Adjust the hierarchy, layout, and visual language of your infographic.</p></div><div className="heading-actions"><button className="secondary-btn" onClick={save}><BookOpen size={16}/> Save project</button><button className="primary-btn" onClick={exportPng} disabled={downloading}><ArrowDownToLine size={16}/> {downloading ? "Preparing PNG…" : "Download PNG"}</button></div></div>
+        {active==="canvas"&&<section className="page canvas-page"><div className="page-heading"><div><div className="eyebrow">02 / EDITORIAL CANVAS</div><h1>Shape the <em>story.</em></h1><p className="lede">Adjust the hierarchy, layout, and visual language of your infographic.</p></div><div className="heading-actions"><button className="secondary-btn history-btn" onClick={undo} disabled={past.length===0} title="Undo last edit"><Undo2 size={15}/> Undo</button><button className="secondary-btn history-btn" onClick={redo} disabled={future.length===0} title="Redo edit"><Redo2 size={15}/> Redo</button><button className="secondary-btn" onClick={save}><BookOpen size={16}/> Save project</button><button className="primary-btn" onClick={exportPng} disabled={downloading}><ArrowDownToLine size={16}/> {downloading ? "Preparing PNG…" : "Download PNG"}</button></div></div>
           <div className="export-options"><span className="export-label">EXPORT FORMAT</span><div className="segmented"><button className={exportFormat==="standard"?"active":""} onClick={()=>setExportFormat("standard")}>Standard · 4:5</button><button className={exportFormat==="pinterest"?"active":""} onClick={()=>setExportFormat("pinterest")}>Pinterest · 2:3</button></div><small>{exportFormat==="pinterest"?"1000 × 1500 px · Pinterest portrait pin":"1080 × 1350 px · Standard portrait"}</small></div><div className="canvas-layout"><div className="canvas-controls">
             <ControlGroup title="LAYOUT"><div className="choice-grid">{templates.map(t=><button className={project.templateType===t?"choice selected":"choice"} key={t} onClick={()=>updateProject({templateType:t})}>{TEMPLATE_LABELS[t]}{project.templateType===t&&<Check size={13}/>}</button>)}</div></ControlGroup>
             <ControlGroup title="COLOR SYSTEM"><div className="palette-list">{palettes.map((p,i)=><button key={p} className={project.paletteId===p?"palette selected":"palette"} onClick={()=>updateProject({paletteId:p})}><span className={"swatch swatch-"+i}/>{PALETTE_LABELS[p]}{project.paletteId===p&&<Check size={14}/>}</button>)}</div></ControlGroup>
-            <ControlGroup title="CONTENT"><label className="field-label">Headline<input value={project.title} onChange={e=>updateProject({title:e.target.value})}/></label><label className="field-label">Subtitle<textarea rows={3} value={project.subtitle} onChange={e=>updateProject({subtitle:e.target.value})}/></label><label className="field-label">Hero metric<input value={project.heroStatValue} onChange={e=>updateProject({heroStatValue:e.target.value})}/></label></ControlGroup>
+            <ControlGroup title="CONTENT"><label className="field-label">Headline<input value={project.title} onChange={e=>updateProject({title:e.target.value})}/></label><label className="field-label">Subtitle<textarea rows={3} value={project.subtitle} onChange={e=>updateProject({subtitle:e.target.value})}/></label><label className="field-label">Hero metric<input value={project.heroStatValue} onChange={e=>updateProject({heroStatValue:e.target.value})}/></label><label className="field-label">Metric label<input value={project.heroStatLabel} onChange={e=>updateProject({heroStatLabel:e.target.value})}/></label><label className="field-label">Takeaway<textarea rows={3} value={project.takeawayQuote} onChange={e=>updateProject({takeawayQuote:e.target.value})}/></label></ControlGroup><ControlGroup title={"SECTIONS · " + project.sections.length + "/12"}><button className="secondary-btn add-section-btn" onClick={addSection}><Plus size={14}/> Add section</button><div className="section-editor-list">{project.sections.map((section,index)=><div className="section-editor" key={section.indexLabel+"-"+index}><div className="section-editor-head"><b>SECTION {String(index+1).padStart(2,"0")}</b><div><button title="Move up" disabled={index===0} onClick={()=>moveSection(index,-1)}><ChevronUp size={14}/></button><button title="Move down" disabled={index===project.sections.length-1} onClick={()=>moveSection(index,1)}><ChevronDown size={14}/></button><button title="Remove section" onClick={()=>removeSection(index)}><Trash2 size={14}/></button></div></div><label className="field-label">Heading<input value={section.heading} onChange={e=>updateSection(index,{heading:e.target.value})}/></label><label className="field-label">Summary<textarea rows={3} value={section.summary} onChange={e=>updateSection(index,{summary:e.target.value})}/></label><label className="field-label">Metric<input value={section.metricValue} onChange={e=>updateSection(index,{metricValue:e.target.value})}/></label><label className="field-label">Visual emphasis<input type="range" min="0" max="100" value={Math.round(section.barRatio*100)} onChange={e=>updateSection(index,{barRatio:Number(e.target.value)/100})}/></label></div>)}</div></ControlGroup>
           </div>
           <div className="preview-wrap"><div className="preview-top"><span>LIVE PREVIEW <i/></span><span>1080 × 1350 / PORTRAIT</span></div><div id="infographic-export" className={"infographic poster-"+project.paletteId}><div className="poster-top"><span>{project.kickerTag}</span><span>INFO / 0{project.sections.length}</span></div><div className="poster-title">{project.title}</div><div className="poster-subtitle">{project.subtitle}</div><div className="hero-stat"><strong>{project.heroStatValue}</strong><div><b>{project.heroStatLabel}</b><small>{project.heroStatDelta}</small></div></div><div className="poster-sections">{project.sections.slice(0,6).map((s,i)=><article key={s.indexLabel} className="poster-section"><span>{s.indexLabel}</span><div><b>{s.heading}</b><p>{s.summary}</p><div className="meter"><i style={{width:`${s.barRatio*100}%`}}/></div></div><strong>{s.metricValue}</strong></article>)}</div><blockquote>{project.takeawayQuote}</blockquote><div className="poster-footer"><span>INFOCRAFT / VISUAL RESEARCH</span><span>CLARITY, COMPOSED.</span></div></div><div className="canvas-bottom"><span>Draft changes are local until saved.</span><button className="text-btn" onClick={()=>setActive("director")}>Ask Art Director <ArrowRight size={14}/></button></div></div></div>
         </section>}
