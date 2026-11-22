@@ -324,6 +324,6 @@ The license applies to code and materials owned by the project copyright holder.
 ---
 
 <div align="center">
-  <img src="public/infocraft/footer.svg" alt="InfoCraft — clarity, composed." width="100%" />
+  <sub>InfoCraft — clarity, composed.</sub>
   <sub>Built around clarity. Designed with intention. Powered by AI.</sub>
 </div>
