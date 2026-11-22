@@ -66,12 +66,36 @@ export default function Studio() {
     if (!source.trim()) { setNotice("Add some source text first."); return; }
     setGenerating(true); setNotice("Structuring your information…");
     try {
-      // The deterministic local workflow keeps the studio usable before Firebase/AI secrets are configured.
-      // AI API integration will replace this fallback once the provider project is configured.
-      await new Promise(r=>setTimeout(r,450));
-      const next=makeProject(source.trim()); setProject(next); setActive("canvas"); setNotice("Draft infographic created. Review and refine every detail.");
-    } catch { setNotice("Could not create the draft. Please try again."); }
-    finally { setGenerating(false); }
+      const response = await fetch("/api/ai/infographic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceText: source.trim(), template: project.templateType, model: "gemini-2.5-flash" })
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "AI generation failed.");
+      const generated = payload.project;
+      const now = Date.now();
+      const next: InfographicProject = {
+        ...demoProject,
+        id: crypto.randomUUID(),
+        title: generated.title,
+        subtitle: generated.subtitle,
+        kickerTag: generated.kickerTag,
+        sourceText: source.trim(),
+        templateType: generated.recommendedTemplate,
+        heroStatValue: generated.heroStatValue,
+        heroStatLabel: generated.heroStatLabel,
+        heroStatDelta: generated.heroStatDelta,
+        takeawayQuote: generated.takeawayQuote,
+        sections: generated.sections,
+        citations: [],
+        createdAt: now,
+        updatedAt: now
+      };
+      setProject(next); setActive("canvas"); setNotice("AI infographic generated. Review and refine every detail.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Could not create the infographic. Please try again.");
+    } finally { setGenerating(false); }
   }
   function save() {
     setLibrary(list => [project, ...list.filter(p=>p.id!==project.id)]);
@@ -110,7 +134,7 @@ export default function Studio() {
       <header className="topbar"><div className="breadcrumbs">INFOCRAFT <span>/</span> {active.toUpperCase()}</div><div className="top-actions"><span className="status"><i/> Draft workspace</span><button className="icon-btn" title="Toggle theme" onClick={()=>setDark(v=>!v)}>{dark?<Sun size={17}/>:<Moon size={17}/>}</button><div className="avatar">IC</div></div></header>
       <div className="content">
         {active==="create"&&<section className="page narrow">
-          <div className="eyebrow">01 / THE CREATIVE STUDIO</div><h1>Make information<br/><em>impossible to ignore.</em></h1><p className="lede">Turn raw notes, research, and ideas into clear editorial-grade visual stories.</p>
+          <div className="eyebrow">01 / THE CREATIVE STUDIO</div><img className="brand-hero-art" src="/infocraft/hero-banner.svg" alt="InfoCraft — visual stories, engineered with AI"/><h1>Make information<br/><em>impossible to ignore.</em></h1><p className="lede">Turn raw notes, research, and ideas into clear editorial-grade visual stories.</p><div className="workflow-art"><img src="/infocraft/how-it-works.svg" alt="InfoCraft workflow: input, AI structure, refine, export"/></div>
           <div className="input-card"><div className="card-head"><div><span className="eyebrow">START WITH YOUR SOURCE</span><h2>What are we making today?</h2></div><span className="step">01 — INPUT</span></div>
             <textarea value={source} onChange={e=>setSource(e.target.value)} placeholder="Paste an article, report, research notes, metrics, or a rough idea…" rows={7}/>
             <div className="input-foot"><span>{source.length.toLocaleString()} characters</span><label className="upload-btn"><ImagePlus size={15}/> Add photo<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setSourceName(f.name);setNotice("Image selected. Image understanding requires AI provider configuration.");}}}/></label></div>
