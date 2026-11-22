@@ -571,3 +571,28 @@ The web implementation is developed independently. Changes to this repository do
   <strong>InfoCraft</strong><br/>
   <sub>Clarity, composed.</sub>
 </p>
+
+
+## Six-phase implementation update
+
+The web implementation now includes the following integration paths. External credentials and provider/model availability are still required for live service behavior; do not interpret code presence as a successful production integration test.
+
+| Phase | Implemented in repository |
+|---|---|
+| 1 — Advanced editor | Editable section content, add/remove/reorder, undo/redo, templates, palettes and PNG export |
+| 2 — AI Art Director | Context-aware server endpoint using Gemini; conversation responses are generated live when `GEMINI_API_KEY` is configured |
+| 3 — Pinterest / social studio | AI-assisted Pinterest pin title, description, hashtag and alt-text generation |
+| 4 — Advanced output | PNG, JPEG, WebP, scaled 1K/2K/4K canvas exports, Pinterest 2:3 sizing, print-to-PDF workflow, plus an AI poster endpoint |
+| 5 — Cloud workspace | Google sign-in, Firestore project sync, cloud Library subscription and owner-scoped Firestore rules |
+| 6 — Source intelligence | Photo input for infographic vision analysis, webpage text import, optional Google Search grounding/citations, and English/Hindi/Hinglish/Odia output selection |
+
+### Required setup for live integrations
+
+1. Set the Firebase Web App values in the deployment environment.
+2. Enable Google as a Firebase Authentication provider and add the deployed hostname to Authorized domains.
+3. Deploy `firestore.rules` to the same Firebase project before using cloud saves.
+4. Set `GEMINI_API_KEY` as a server-only secret in the hosting provider.
+5. Confirm that the Google AI project supports the requested text, search-grounding and image-generation models. Model availability and output resolution are controlled by the provider; the UI's requested poster resolution is not a guarantee of native model output dimensions.
+6. Run the CI workflow and complete browser-level tests with real Firebase and Gemini credentials before production use.
+
+The URL importer accepts public HTTP(S) HTML/plain-text pages only. It is not a general-purpose crawler and does not bypass paywalls or authentication. Review imported and AI-generated content, especially citations and numeric claims, before publishing.
