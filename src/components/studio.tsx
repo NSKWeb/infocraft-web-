@@ -31,7 +31,7 @@ const demoProject: InfographicProject = {
     { indexLabel: "01", heading: "Solar scales up", summary: "Falling costs and faster installations are changing the economics of electricity.", metricValue: "01", metricUnit: "Generation", barRatio: .9 },
     { indexLabel: "02", heading: "Wind adds depth", summary: "Onshore and offshore projects diversify clean energy supply across regions.", metricValue: "02", metricUnit: "Infrastructure", barRatio: .72 },
     { indexLabel: "03", heading: "Storage matters", summary: "Flexible storage helps balance variable generation and demand throughout the day.", metricValue: "03", metricUnit: "Flexibility", barRatio: .58 }
-  ], citations: payload.citations ?? [], createdAt: Date.now(), updatedAt: Date.now()
+  ], citations: [], createdAt: Date.now(), updatedAt: Date.now()
 };
 
 function makeProject(text: string): InfographicProject {
@@ -103,7 +103,7 @@ export default function Studio() {
   function undo() { const previous = past[past.length - 1]; if (!previous) return; setFuture(items => [project, ...items]); setPast(items => items.slice(0, -1)); setProject(previous); setNotice("Last edit undone."); }
   function redo() { const next = future[0]; if (!next) return; setPast(items => [...items, project]); setFuture(items => items.slice(1)); setProject(next); setNotice("Edit restored."); }
   async function generate() {
-    if (!source.trim()) { setNotice("Add some source text first."); return; }
+    if (!source.trim() && !imageFile) { setNotice("Add source text or a photo first."); return; }
     setGenerating(true); setNotice("Structuring your information…");
     try {
       const response = await fetch("/api/ai/infographic", {
@@ -128,7 +128,7 @@ export default function Studio() {
         heroStatDelta: generated.heroStatDelta,
         takeawayQuote: generated.takeawayQuote,
         sections: generated.sections,
-        citations: [],
+        citations: payload.citations ?? [],
         createdAt: now,
         updatedAt: now
       };
@@ -272,11 +272,14 @@ export default function Studio() {
     }
   }
   function escapeXml(s:string){return s.replace(/[<>&'"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;",'"':"&quot;"}[c]||c));}
-  function sendChat() {
+  async function sendChat() {
     if (!chatInput.trim()) return;
     const message=chatInput.trim(); setChat(c=>[...c,{role:"user",text:message}]); setChatInput("");
-    setChat(c=>[...c,{role:"assistant",text:"Try making the headline more specific, keeping one dominant metric, and limiting each block to a single idea. Select a section on the Canvas to edit its copy. AI-powered live suggestions will activate after provider configuration."}]);
+    try { const response=await fetch("/api/ai/director",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message,project,history:chat.slice(-8)})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setChat(c=>[...c,{role:"assistant",text:data.reply}]); } catch(error) { setChat(c=>[...c,{role:"assistant",text:error instanceof Error?error.message:"Art Director is unavailable."}]); }
   }
+  async function importUrl() { if (!urlInput.trim()) return; try { const response=await fetch("/api/import/url",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:urlInput.trim()})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setSource(data.text); setSourceName(data.title||"Imported webpage"); setNotice("Webpage imported. Review source text before generating."); } catch(error) { setNotice(error instanceof Error?error.message:"URL import failed."); } }
+  async function generatePoster() { setPosterBusy(true); try { const response=await fetch("/api/ai/poster",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:project.title+". "+project.subtitle+". "+project.takeawayQuote,ratio,resolution})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setPosterImage(data.image); setNotice("Poster image generated."); } catch(error) { setNotice(error instanceof Error?error.message:"Poster generation failed."); } finally { setPosterBusy(false); } }
+  async function makeSocialCopy() { try { const response=await fetch("/api/ai/director",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:"Create Pinterest SEO copy: pin title, keyword-rich description, relevant hashtags and accessible alt text. Label each.",project})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setSocialCopy(data.reply); } catch(error) { setNotice(error instanceof Error?error.message:"Could not create social copy."); } }
 
   return <main className={dark?"studio":"studio light"}>
     <aside className="sidebar">
