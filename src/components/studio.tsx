@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
-  ArrowDownToLine, ArrowRight, BookOpen, Check, ChevronDown, CircleHelp,
+  ArrowDownToLine, ArrowRight, BookOpen, Check, Plus,
   FileImage, FolderOpen, ImagePlus, LayoutDashboard, LoaderCircle, MessageCircle,
   Moon, Search, Settings2, Sparkles, Sun, WandSparkles, X
 } from "lucide-react";
