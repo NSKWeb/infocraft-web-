@@ -52,6 +52,7 @@ export default function Studio() {
   const [library, setLibrary] = useState<InfographicProject[]>([]);
   const [notice, setNotice] = useState("Welcome to your creative studio");
   const [generating, setGenerating] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [dark, setDark] = useState(true);
   const [resolution, setResolution] = useState("2K");
   const [ratio, setRatio] = useState("4:5");
@@ -101,13 +102,126 @@ export default function Studio() {
     setLibrary(list => [project, ...list.filter(p=>p.id!==project.id)]);
     setNotice("Project saved in this browser session.");
   }
-  function exportPng() {
-    const el=document.getElementById("infographic-export");
-    if (!el) return;
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350"><rect width="1080" height="1350" fill="#f2efe6"/><rect x="64" y="64" width="952" height="1222" fill="none" stroke="#252522" stroke-width="3"/><text x="96" y="130" font-family="Arial" font-size="26" letter-spacing="5" fill="#d94c36">${escapeXml(project.kickerTag)}</text><text x="96" y="260" font-family="Arial" font-weight="700" font-size="78" fill="#20201d">${escapeXml(project.title.slice(0,32))}</text><foreignObject x="96" y="295" width="850" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="font:26px Arial;color:#555">${escapeXml(project.subtitle)}</div></foreignObject><text x="96" y="520" font-family="Arial" font-size="150" font-weight="700" fill="#d94c36">${escapeXml(project.heroStatValue)}</text><text x="100" y="575" font-family="Arial" font-size="28" fill="#34342f">${escapeXml(project.heroStatLabel)}</text>${project.sections.slice(0,4).map((s,i)=>`<text x="96" y="${700+i*125}" font-family="Arial" font-size="24" fill="#d94c36">${s.indexLabel}</text><text x="175" y="${700+i*125}" font-family="Arial" font-size="34" font-weight="700" fill="#20201d">${escapeXml(s.heading.slice(0,38))}</text><text x="175" y="${744+i*125}" font-family="Arial" font-size="21" fill="#555">${escapeXml(s.summary.slice(0,90))}</text>`).join("")}<text x="96" y="1230" font-family="Arial" font-size="25" fill="#d94c36">INFOCRAFT  /  VISUAL STORIES, ENGINEERED WITH AI</text></svg>`;
-    const blob=new Blob([svg],{type:"image/svg+xml"}); const url=URL.createObjectURL(blob); const img=new Image();
-    img.onload=()=>{ const canvas=document.createElement("canvas");canvas.width=1080;canvas.height=1350;const ctx=canvas.getContext("2d");ctx?.drawImage(img,0,0);canvas.toBlob(b=>{if(!b)return;const link=document.createElement("a");link.href=URL.createObjectURL(b);link.download="infocraft-infographic.png";link.click();URL.revokeObjectURL(link.href);URL.revokeObjectURL(url);},"image/png"); };
-    img.src=url;
+  async function exportPng() {
+    if (downloading) return;
+    setDownloading(true);
+    setNotice("Preparing your high-resolution PNG…");
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1080;
+      canvas.height = 1350;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Your browser could not start the image exporter.");
+
+      const paletteColors: Record<PaletteId, { accent: string; paper: string; ink: string; muted: string }> = {
+        SWISS_VERMILION: { accent: "#d94c36", paper: "#f1eee5", ink: "#22221e", muted: "#66635b" },
+        COBALT_BLUEPRINT: { accent: "#315a9e", paper: "#edf0f3", ink: "#1d2632", muted: "#5e6875" },
+        CHARCOAL_PRESS: { accent: "#343b40", paper: "#e8e7e1", ink: "#222522", muted: "#62645f" },
+        FOREST_OCHRE: { accent: "#82764b", paper: "#ede9dc", ink: "#29291f", muted: "#696653" }
+      };
+      const colors = paletteColors[project.paletteId];
+      const wrap = (value: string, maxWidth: number, font: string) => {
+        ctx.font = font;
+        const words = String(value || "").split(/\\s+/);
+        const lines: string[] = [];
+        let line = "";
+        for (const word of words) {
+          const next = line ? line + " " + word : word;
+          if (line && ctx.measureText(next).width > maxWidth) {
+            lines.push(line);
+            line = word;
+          } else line = next;
+        }
+        if (line) lines.push(line);
+        return lines;
+      };
+      const drawLines = (value: string, x: number, y: number, maxWidth: number, font: string, color: string, lineHeight: number, maxLines: number) => {
+        const lines = wrap(value, maxWidth, font).slice(0, maxLines);
+        ctx.font = font;
+        ctx.fillStyle = color;
+        lines.forEach((line, index) => ctx.fillText(line, x, y + index * lineHeight));
+        return y + lines.length * lineHeight;
+      };
+
+      ctx.fillStyle = colors.paper;
+      ctx.fillRect(0, 0, 1080, 1350);
+      ctx.strokeStyle = colors.ink;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(52, 52, 976, 1246);
+      ctx.fillStyle = colors.accent;
+      ctx.font = "700 22px Arial";
+      ctx.fillText(String(project.kickerTag || "INFOCRAFT").toUpperCase().slice(0, 64), 88, 112);
+      ctx.textAlign = "right";
+      ctx.fillText("INFO / " + String(project.sections.length).padStart(2, "0"), 990, 112);
+      ctx.textAlign = "left";
+      ctx.strokeStyle = colors.ink;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(88, 142); ctx.lineTo(992, 142); ctx.stroke();
+
+      const titleLines = drawLines(project.title, 88, 235, 900, "700 68px Arial", colors.ink, 76, 2);
+      const subtitleY = drawLines(project.subtitle, 90, titleLines + 8, 850, "26px Arial", colors.muted, 36, 3);
+      const metricTop = Math.max(410, subtitleY + 38);
+      ctx.strokeStyle = colors.ink; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(88, metricTop); ctx.lineTo(992, metricTop); ctx.stroke();
+      ctx.fillStyle = colors.accent;
+      ctx.font = "700 132px Arial";
+      ctx.fillText(String(project.heroStatValue || "").slice(0, 12), 88, metricTop + 142);
+      ctx.fillStyle = colors.ink;
+      ctx.font = "700 28px Arial";
+      ctx.fillText(String(project.heroStatLabel || "").slice(0, 55), 350, metricTop + 102);
+      ctx.fillStyle = colors.muted;
+      ctx.font = "16px Arial";
+      ctx.fillText(String(project.heroStatDelta || "").slice(0, 70), 350, metricTop + 132);
+
+      let y = metricTop + 195;
+      const sections = project.sections.slice(0, 6);
+      sections.forEach((section, index) => {
+        if (y > 1080) return;
+        ctx.strokeStyle = "#c8c4b8"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(88, y - 24); ctx.lineTo(992, y - 24); ctx.stroke();
+        ctx.fillStyle = colors.accent;
+        ctx.font = "700 20px Arial";
+        ctx.fillText(String(section.indexLabel || String(index + 1).padStart(2, "0")), 90, y + 8);
+        const headingEnd = drawLines(section.heading, 160, y + 8, 760, "700 27px Arial", colors.ink, 32, 1);
+        const summaryEnd = drawLines(section.summary, 160, headingEnd + 7, 760, "18px Arial", colors.muted, 24, 2);
+        const barY = summaryEnd + 9;
+        ctx.fillStyle = "#d5d1c7"; ctx.fillRect(160, barY, 760, 4);
+        ctx.fillStyle = colors.accent; ctx.fillRect(160, barY, 760 * Math.max(0, Math.min(1, section.barRatio || 0)), 4);
+        y = barY + 38;
+      });
+
+      if (project.takeawayQuote && y < 1190) {
+        ctx.fillStyle = colors.accent;
+        ctx.fillRect(88, y, 4, 58);
+        drawLines(project.takeawayQuote, 110, y + 22, 850, "italic 20px Georgia", colors.ink, 27, 2);
+      }
+      ctx.strokeStyle = "#aaa79d"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(88, 1230); ctx.lineTo(992, 1230); ctx.stroke();
+      ctx.fillStyle = colors.muted;
+      ctx.font = "700 14px Arial";
+      ctx.fillText("INFOCRAFT / VISUAL RESEARCH", 88, 1262);
+      ctx.textAlign = "right";
+      ctx.fillText("CLARITY, COMPOSED.", 992, 1262);
+      ctx.textAlign = "left";
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(value => value ? resolve(value) : reject(new Error("PNG encoding failed. Please try again.")), "image/png");
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeName = (project.title || "infocraft-infographic").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "infocraft-infographic";
+      link.href = url;
+      link.download = safeName + ".png";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+      setNotice("PNG downloaded successfully.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Could not export PNG. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
   }
   function escapeXml(s:string){return s.replace(/[<>&'"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;",'"':"&quot;"}[c]||c));}
   function sendChat() {
@@ -145,7 +259,7 @@ export default function Studio() {
           <div className="below-note"><span>EDITORIAL BY DESIGN</span><span>SWISS GRID / SYSTEM 01</span><span>BUILT FOR CLARITY</span></div>
         </section>}
 
-        {active==="canvas"&&<section className="page canvas-page"><div className="page-heading"><div><div className="eyebrow">02 / EDITORIAL CANVAS</div><h1>Shape the <em>story.</em></h1><p className="lede">Adjust the hierarchy, layout, and visual language of your infographic.</p></div><div className="heading-actions"><button className="secondary-btn" onClick={save}><BookOpen size={16}/> Save project</button><button className="primary-btn" onClick={exportPng}><ArrowDownToLine size={16}/> Export PNG</button></div></div>
+        {active==="canvas"&&<section className="page canvas-page"><div className="page-heading"><div><div className="eyebrow">02 / EDITORIAL CANVAS</div><h1>Shape the <em>story.</em></h1><p className="lede">Adjust the hierarchy, layout, and visual language of your infographic.</p></div><div className="heading-actions"><button className="secondary-btn" onClick={save}><BookOpen size={16}/> Save project</button><button className="primary-btn" onClick={exportPng} disabled={downloading}><ArrowDownToLine size={16}/> {downloading ? "Preparing PNG…" : "Download PNG"}</button></div></div>
           <div className="canvas-layout"><div className="canvas-controls">
             <ControlGroup title="LAYOUT"><div className="choice-grid">{templates.map(t=><button className={project.templateType===t?"choice selected":"choice"} key={t} onClick={()=>updateProject({templateType:t})}>{TEMPLATE_LABELS[t]}{project.templateType===t&&<Check size={13}/>}</button>)}</div></ControlGroup>
             <ControlGroup title="COLOR SYSTEM"><div className="palette-list">{palettes.map((p,i)=><button key={p} className={project.paletteId===p?"palette selected":"palette"} onClick={()=>updateProject({paletteId:p})}><span className={"swatch swatch-"+i}/>{PALETTE_LABELS[p]}{project.paletteId===p&&<Check size={14}/>}</button>)}</div></ControlGroup>
