@@ -272,6 +272,7 @@ InfoCraft Web supports three deployment paths:
 - **Vercel** — recommended for the simplest Next.js deployment; framework detection and Next.js runtime support are built in.
 - **Netlify** — supported through Netlify's Next.js adapter; the repository includes a minimal `netlify.toml`.
 - **Antideploy** — run as a standard Node.js service using the production start script.
+- **Any VPS** — deploy on a Linux VPS (Ubuntu/Debian or another Node.js 20-compatible distribution) using Node.js, systemd/PM2, Nginx, and HTTPS.
 
 ### Shared build settings
 
@@ -296,6 +297,32 @@ Import `NSKWeb/infocraft-web-` from the repository root. Use `npm run build` and
 ### Antideploy
 
 Use Node.js 20, `npm install`, `npm run build`, and `npm run start`. Configure the platform-provided `PORT` and health-check path `/api/health`.
+
+### Universal VPS deployment
+
+For a self-managed Linux VPS, use the standard Node.js production server behind Nginx. This works on common Ubuntu/Debian VPS providers and does not depend on a provider-specific deployment platform.
+
+1. Install Node.js 20.x (20.9+), Git, and Nginx using your distribution's supported package/source instructions.
+2. Clone the repository to a persistent directory such as `/var/www/infocraft-web`.
+3. Create a private production environment file (for example `/etc/infocraft-web.env`) with the Firebase variables and server-only `GEMINI_API_KEY` described above. Restrict file permissions; do not commit it.
+4. Run `npm install`, `npm run build`, then start with `npm run start` using `PORT=3000`.
+5. Keep the app running with systemd or PM2, and configure Nginx as a reverse proxy to `127.0.0.1:3000`.
+6. Point your domain's DNS A/AAAA records to the VPS and enable HTTPS with Certbot/Let's Encrypt or your preferred certificate manager.
+7. Allow inbound SSH and web traffic (80/443) in the VPS firewall; keep the Node.js app port private.
+
+Example production commands:
+
+```bash
+git clone https://github.com/NSKWeb/infocraft-web-.git /var/www/infocraft-web
+cd /var/www/infocraft-web
+npm install
+npm run build
+PORT=3000 npm run start
+```
+
+For a persistent service, create a systemd unit that runs `npm run start` from the project directory, loads the protected environment file with `EnvironmentFile=/etc/infocraft-web.env`, sets `Environment=NODE_ENV=production` and `Environment=PORT=3000`, and uses `Restart=always`. Run it as a dedicated non-root application user. Configure Nginx to proxy requests to `http://127.0.0.1:3000` and preserve the original Host and forwarded protocol headers.
+
+After deployment, verify `https://YOUR_DOMAIN/api/health` and test sign-in, Firestore, Gemini, imports, and exports. For updates, pull the intended commit, install dependencies, rebuild, then restart the service. Back up required data/configuration before upgrades.
 
 ### Required environment variables
 
