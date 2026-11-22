@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { onAuthStateChanged, signInWithPopup, signOut, type User } from "firebase/auth";
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query, setDoc } from "firebase/firestore";
+import { auth, db, firebaseConfigured, googleProvider } from "@/lib/firebase";
 import {
   ArrowDownToLine, ArrowRight, BookOpen, Check, Plus, Undo2, Redo2, Trash2, ChevronUp, ChevronDown,
   FileImage, FolderOpen, ImagePlus, LayoutDashboard, LoaderCircle, MessageCircle,
@@ -28,7 +31,7 @@ const demoProject: InfographicProject = {
     { indexLabel: "01", heading: "Solar scales up", summary: "Falling costs and faster installations are changing the economics of electricity.", metricValue: "01", metricUnit: "Generation", barRatio: .9 },
     { indexLabel: "02", heading: "Wind adds depth", summary: "Onshore and offshore projects diversify clean energy supply across regions.", metricValue: "02", metricUnit: "Infrastructure", barRatio: .72 },
     { indexLabel: "03", heading: "Storage matters", summary: "Flexible storage helps balance variable generation and demand throughout the day.", metricValue: "03", metricUnit: "Flexibility", barRatio: .58 }
-  ], citations: [], createdAt: Date.now(), updatedAt: Date.now()
+  ], citations: payload.citations ?? [], createdAt: Date.now(), updatedAt: Date.now()
 };
 
 function makeProject(text: string): InfographicProject {
@@ -63,7 +66,17 @@ export default function Studio() {
   const [chatInput, setChatInput] = useState("");
   const [searchText, setSearchText] = useState("");
   const [sourceName, setSourceName] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [urlInput, setUrlInput] = useState("");
+  const [searchGrounded, setSearchGrounded] = useState(false);
+  const [language, setLanguage] = useState("same as source");
+  const [posterImage, setPosterImage] = useState("");
+  const [posterBusy, setPosterBusy] = useState(false);
+  const [socialCopy, setSocialCopy] = useState("");
   const current = useMemo(() => library.find(p=>p.id===project.id) || project,[library,project]);
+  useEffect(() => { if (!auth) return; return onAuthStateChanged(auth, setUser); }, []);
+  useEffect(() => { if (!user || !db) return; const q = query(collection(db, "users", user.uid, "projects"), orderBy("updatedAt", "desc")); return onSnapshot(q, snap => setLibrary(snap.docs.map(item => item.data() as InfographicProject)), error => setNotice(error.message)); }, [user]);
 
   function commitProject(next: InfographicProject) {
     setPast(items => [...items.slice(-49), project]);
@@ -96,7 +109,7 @@ export default function Studio() {
       const response = await fetch("/api/ai/infographic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceText: source.trim(), template: project.templateType, model: "gemini-2.5-flash" })
+        body: JSON.stringify({ sourceText: source.trim(), template: project.templateType, model: project.generationMode === "HIGH_THINKING" ? "gemini-2.5-pro" : "gemini-2.5-flash", searchGrounded, language, ...(imageFile ? { imageBase64: await fileToBase64(imageFile), imageMimeType: imageFile.type } : {}) })
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "AI generation failed.");
@@ -124,10 +137,13 @@ export default function Studio() {
       setNotice(error instanceof Error ? error.message : "Could not create the infographic. Please try again.");
     } finally { setGenerating(false); }
   }
-  function save() {
-    setLibrary(list => [project, ...list.filter(p=>p.id!==project.id)]);
-    setNotice("Project saved in this browser session.");
+  async function save() {
+    const owned = { ...project, userId: user?.uid };
+    setLibrary(list => [owned, ...list.filter(p=>p.id!==project.id)]);
+    if (user && db) { try { await setDoc(doc(db, "users", user.uid, "projects", project.id), owned); setNotice("Project synced to your cloud Library."); } catch (error) { setNotice(error instanceof Error ? error.message : "Cloud save failed."); } } else setNotice("Saved locally for this session. Sign in to sync across devices.");
   }
+  async function signIn() { if (!auth) { setNotice("Add Firebase web configuration to enable Google sign-in."); return; } try { await signInWithPopup(auth, googleProvider); } catch (error) { setNotice(error instanceof Error ? error.message : "Sign-in failed."); } }
+  async function removeProject(id: string) { if (user && db) await deleteDoc(doc(db, "users", user.uid, "projects", id)); setLibrary(items => items.filter(item => item.id !== id)); }
   async function exportPng() {
     if (downloading) return;
     setDownloading(true);
@@ -270,11 +286,11 @@ export default function Studio() {
         <NavButton active={active==="director"} onClick={()=>setActive("director")} icon={<MessageCircle/>} label="AI Art Director"/>
         <NavButton active={active==="library"} onClick={()=>setActive("library")} icon={<FolderOpen/>} label="Library" count={library.length}/>
       </nav>
-      <div className="sidebar-bottom"><div className="plan-card"><span className="online-dot"/> <span>LOCAL STUDIO</span><small>Firebase not connected</small></div><button className="side-link" onClick={()=>setNotice("Settings and Firebase connection setup will be added in the next stage.")}><Settings2 size={16}/> Settings</button><button className="side-link" onClick={()=>setDark(v=>!v)}>{dark?<Sun size={16}/>:<Moon size={16}/>} {dark?"Light appearance":"Dark appearance"}</button></div>
+      <div className="sidebar-bottom"><div className="plan-card"><span className="online-dot"/> <span>LOCAL STUDIO</span><small>{user ? "Cloud sync enabled" : firebaseConfigured ? "Sign in to sync projects" : "Local workspace"}</small></div><button className="side-link" onClick={()=>setNotice("Settings and Firebase connection setup will be added in the next stage.")}><Settings2 size={16}/> Settings</button><button className="side-link" onClick={()=>setDark(v=>!v)}>{dark?<Sun size={16}/>:<Moon size={16}/>} {dark?"Light appearance":"Dark appearance"}</button></div>
     </aside>
 
     <section className="main-panel">
-      <header className="topbar"><div className="breadcrumbs">INFOCRAFT <span>/</span> {active.toUpperCase()}</div><div className="top-actions"><span className="status"><i/> Draft workspace</span><button className="icon-btn" title="Toggle theme" onClick={()=>setDark(v=>!v)}>{dark?<Sun size={17}/>:<Moon size={17}/>}</button><div className="avatar">IC</div></div></header>
+      <header className="topbar"><div className="breadcrumbs">INFOCRAFT <span>/</span> {active.toUpperCase()}</div><div className="top-actions"><span className="status"><i/> Draft workspace</span><button className="icon-btn" title="Toggle theme" onClick={()=>setDark(v=>!v)}>{dark?<Sun size={17}/>:<Moon size={17}/>}</button><button className="secondary-btn" onClick={user?()=>signOut(auth!):signIn}>{user ? "Sign out" : "Google sign-in"}</button><div className="avatar">{user?.displayName?.slice(0,2).toUpperCase() || "IC"}</div></div></header>
       <div className="content">
         {active==="create"&&<section className="page narrow">
           <div className="eyebrow">01 / THE CREATIVE STUDIO</div><img className="brand-hero-art" src="/infocraft/hero-banner.svg" alt="InfoCraft — visual stories, engineered with AI"/><h1>Make information<br/><em>impossible to ignore.</em></h1><p className="lede">Turn raw notes, research, and ideas into clear editorial-grade visual stories.</p><div className="workflow-art"><img src="/infocraft/how-it-works.svg" alt="InfoCraft workflow: input, AI structure, refine, export"/></div>
@@ -314,3 +330,5 @@ function NavButton({active,onClick,icon,label,count}:{active:boolean;onClick:()=
 function ControlGroup({title,children}:{title:string;children:React.ReactNode}) {
   return <section className="control-group"><div className="control-title">{title}</div>{children}</section>;
 }
+
+function fileToBase64(file: File): Promise<string> { return new Promise((resolve,reject)=>{ const reader=new FileReader(); reader.onload=()=>resolve(String(reader.result).split(",")[1]||""); reader.onerror=()=>reject(new Error("Could not read selected image.")); reader.readAsDataURL(file); }); }
