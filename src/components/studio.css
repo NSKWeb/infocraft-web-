@@ -15,3 +15,15 @@
 .section-editor .field-label{margin:10px 0}
 .section-editor input[type=range]{padding:0;accent-color:var(--accent)}
 @media(max-width:720px){.heading-actions{display:grid;grid-template-columns:1fr 1fr}.heading-actions .primary-btn{grid-column:1/-1}.history-btn{justify-content:center}}
+/* Expanded feature phase controls */
+.export-options{display:grid;gap:8px;margin:0 0 18px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.export-label{font-size:9px;letter-spacing:1.5px;color:var(--muted);font-weight:700}
+.export-options small{color:var(--muted);font-size:10px}
+.generated-poster{display:block;width:100%;max-height:720px;object-fit:contain;background:#171716;border:1px solid var(--line);border-radius:8px}
+.social-copy{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:14px;color:var(--ink);font:12px/1.6 Arial,sans-serif;margin-top:14px}
+.citation-list{display:grid;gap:8px;margin-top:18px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:7px}
+.citation-list b{font-size:10px;letter-spacing:1.2px;color:var(--muted)}
+.citation-list a{color:var(--accent);font-size:11px;overflow-wrap:anywhere}
+.input-card select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:10px;border-radius:6px}
+.input-card input[type=checkbox]{accent-color:var(--accent);margin-right:8px}
+@media(max-width:720px){.export-options .segmented{flex-wrap:wrap}.export-options .segmented button{min-width:70px}}
