@@ -53,6 +53,7 @@ export default function Studio() {
   const [notice, setNotice] = useState("Welcome to your creative studio");
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [exportFormat, setExportFormat] = useState<"standard" | "pinterest">("standard");
   const [dark, setDark] = useState(true);
   const [resolution, setResolution] = useState("2K");
   const [ratio, setRatio] = useState("4:5");
@@ -108,10 +109,12 @@ export default function Studio() {
     setNotice("Preparing your high-resolution PNG…");
     try {
       const canvas = document.createElement("canvas");
-      canvas.width = 1080;
-      canvas.height = 1350;
+      const pinterestExport = exportFormat === "pinterest";
+      canvas.width = pinterestExport ? 1000 : 1080;
+      canvas.height = pinterestExport ? 1500 : 1350;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Your browser could not start the image exporter.");
+      if (pinterestExport) ctx.scale(1000 / 1080, 1000 / 1080);
 
       const paletteColors: Record<PaletteId, { accent: string; paper: string; ink: string; muted: string }> = {
         SWISS_VERMILION: { accent: "#d94c36", paper: "#f1eee5", ink: "#22221e", muted: "#66635b" },
@@ -147,7 +150,7 @@ export default function Studio() {
       ctx.fillRect(0, 0, 1080, 1350);
       ctx.strokeStyle = colors.ink;
       ctx.lineWidth = 3;
-      ctx.strokeRect(52, 52, 976, 1246);
+      ctx.strokeRect(52, 52, 976, pinterestExport ? 1516 : 1246);
       ctx.fillStyle = colors.accent;
       ctx.font = "700 22px Arial";
       ctx.fillText(String(project.kickerTag || "INFOCRAFT").toUpperCase().slice(0, 64), 88, 112);
@@ -195,13 +198,14 @@ export default function Studio() {
         ctx.fillRect(88, y, 4, 58);
         drawLines(project.takeawayQuote, 110, y + 22, 850, "italic 20px Georgia", colors.ink, 27, 2);
       }
+      const footerY = pinterestExport ? 1440 : 1230;
       ctx.strokeStyle = "#aaa79d"; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(88, 1230); ctx.lineTo(992, 1230); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(88, footerY); ctx.lineTo(992, footerY); ctx.stroke();
       ctx.fillStyle = colors.muted;
       ctx.font = "700 14px Arial";
-      ctx.fillText("INFOCRAFT / VISUAL RESEARCH", 88, 1262);
+      ctx.fillText("INFOCRAFT / VISUAL RESEARCH", 88, footerY + 32);
       ctx.textAlign = "right";
-      ctx.fillText("CLARITY, COMPOSED.", 992, 1262);
+      ctx.fillText(pinterestExport ? "PINTEREST EDITION · 2:3" : "CLARITY, COMPOSED.", 992, footerY + 32);
       ctx.textAlign = "left";
 
       const blob = await new Promise<Blob>((resolve, reject) => {
@@ -211,12 +215,12 @@ export default function Studio() {
       const link = document.createElement("a");
       const safeName = (project.title || "infocraft-infographic").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "infocraft-infographic";
       link.href = url;
-      link.download = safeName + ".png";
+      link.download = safeName + (pinterestExport ? "-pinterest-2x3" : "-4x5") + ".png";
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1500);
-      setNotice("PNG downloaded successfully.");
+      setNotice(pinterestExport ? "Pinterest-ready 2:3 PNG downloaded (1000 × 1500)." : "4:5 PNG downloaded successfully.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Could not export PNG. Please try again.");
     } finally {
@@ -260,7 +264,7 @@ export default function Studio() {
         </section>}
 
         {active==="canvas"&&<section className="page canvas-page"><div className="page-heading"><div><div className="eyebrow">02 / EDITORIAL CANVAS</div><h1>Shape the <em>story.</em></h1><p className="lede">Adjust the hierarchy, layout, and visual language of your infographic.</p></div><div className="heading-actions"><button className="secondary-btn" onClick={save}><BookOpen size={16}/> Save project</button><button className="primary-btn" onClick={exportPng} disabled={downloading}><ArrowDownToLine size={16}/> {downloading ? "Preparing PNG…" : "Download PNG"}</button></div></div>
-          <div className="canvas-layout"><div className="canvas-controls">
+          <div className="export-options"><span className="export-label">EXPORT FORMAT</span><div className="segmented"><button className={exportFormat==="standard"?"active":""} onClick={()=>setExportFormat("standard")}>Standard · 4:5</button><button className={exportFormat==="pinterest"?"active":""} onClick={()=>setExportFormat("pinterest")}>Pinterest · 2:3</button></div><small>{exportFormat==="pinterest"?"1000 × 1500 px · Pinterest portrait pin":"1080 × 1350 px · Standard portrait"}</small></div><div className="canvas-layout"><div className="canvas-controls">
             <ControlGroup title="LAYOUT"><div className="choice-grid">{templates.map(t=><button className={project.templateType===t?"choice selected":"choice"} key={t} onClick={()=>updateProject({templateType:t})}>{TEMPLATE_LABELS[t]}{project.templateType===t&&<Check size={13}/>}</button>)}</div></ControlGroup>
             <ControlGroup title="COLOR SYSTEM"><div className="palette-list">{palettes.map((p,i)=><button key={p} className={project.paletteId===p?"palette selected":"palette"} onClick={()=>updateProject({paletteId:p})}><span className={"swatch swatch-"+i}/>{PALETTE_LABELS[p]}{project.paletteId===p&&<Check size={14}/>}</button>)}</div></ControlGroup>
             <ControlGroup title="CONTENT"><label className="field-label">Headline<input value={project.title} onChange={e=>updateProject({title:e.target.value})}/></label><label className="field-label">Subtitle<textarea rows={3} value={project.subtitle} onChange={e=>updateProject({subtitle:e.target.value})}/></label><label className="field-label">Hero metric<input value={project.heroStatValue} onChange={e=>updateProject({heroStatValue:e.target.value})}/></label></ControlGroup>
