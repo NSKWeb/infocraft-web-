@@ -2,3 +2,16 @@
 /* Original InfoCraft artwork carried over from the Android repository. */
 .brand-hero-art{display:block;width:100%;max-height:220px;object-fit:contain;object-position:left center;margin:18px 0 10px;border-radius:8px}.workflow-art{width:100%;margin:22px 0 30px;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px}.workflow-art img{display:block;width:100%;height:auto;max-height:180px;object-fit:contain}
 @media(max-width:700px){.brand-hero-art{max-height:150px}.workflow-art{margin:16px 0 22px;padding:8px}}
+
+/* Phase 1 editor controls */
+.history-btn:disabled,.section-editor-head button:disabled{opacity:.35;cursor:not-allowed}
+.add-section-btn{width:100%;margin-bottom:12px}
+.section-editor-list{display:grid;gap:10px}
+.section-editor{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:10px}
+.section-editor-head{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:9px;letter-spacing:1px}
+.section-editor-head>div{display:flex;gap:3px}
+.section-editor-head button{display:grid;place-items:center;width:25px;height:25px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--muted)}
+.section-editor-head button:hover:not(:disabled){color:var(--accent);border-color:var(--accent)}
+.section-editor .field-label{margin:10px 0}
+.section-editor input[type=range]{padding:0;accent-color:var(--accent)}
+@media(max-width:720px){.heading-actions{display:grid;grid-template-columns:1fr 1fr}.heading-actions .primary-btn{grid-column:1/-1}.history-btn{justify-content:center}}
