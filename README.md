@@ -267,34 +267,45 @@ InfoCraft Web is an evolving browser-based implementation. This table describes 
 
 ## 08 / Deployment
 
-The web project is intended to run as a standard Next.js application on a Node.js hosting service.
+InfoCraft Web supports three deployment paths:
 
-### Antideploy settings
+- **Vercel** — recommended for the simplest Next.js deployment; framework detection and Next.js runtime support are built in.
+- **Netlify** — supported through Netlify's Next.js adapter; the repository includes a minimal `netlify.toml`.
+- **Antideploy** — run as a standard Node.js service using the production start script.
+
+### Shared build settings
 
 | Setting | Value |
 |---|---|
-| Repository | `NSKWeb/infocraft-web-` |
-| Branch | `main` |
-| Runtime | Node.js 20 |
-| Install command | `npm ci` when a committed lockfile is available; otherwise `npm install` |
-| Build command | `npm run build` |
-| Start command | `npm run start` |
-| Health-check path | `/api/health` |
-| Port | Platform-provided `PORT` |
+| Node.js | 20.x (20.9+ recommended) |
+| Install | `npm install` (no lockfile is currently committed) |
+| Build | `npm run build` |
+| Start | `npm run start` (Node.js server hosting) |
+| Health check | `/api/health` |
 
-### Deployment checklist
+Do not configure a static output directory or static export: the app uses server/API routes.
 
-1. Connect **`infocraft-web-`**, not the original Android repository.
-2. Select the intended branch and Node.js runtime.
-3. Configure required environment variables as hosting secrets.
-4. Confirm the server binds to `0.0.0.0` and honors the platform-provided `PORT`.
-5. Deploy and inspect build logs.
-6. Open `/api/health`.
-7. Test sign-in, cloud saves, AI generation, imports, and exports separately in the deployed browser.
+### Vercel
 
-See [docs/ANTIDEPLOY.md](docs/ANTIDEPLOY.md) for repository-specific hosting notes.
+Import `NSKWeb/infocraft-web-`, keep the root directory as `./`, choose the **Next.js** framework preset (normally auto-detected), and leave the output directory at its default. Set the required environment variables in Project Settings → Environment Variables.
 
-A successful build or health response is not a substitute for end-to-end production verification.
+### Netlify
+
+Import `NSKWeb/infocraft-web-` from the repository root. Use `npm run build` and leave the publish directory blank so Netlify's Next.js adapter manages the runtime output. The repository's `netlify.toml` pins Node.js 20.x and the build command. Add environment variables in Site configuration → Environment variables.
+
+### Antideploy
+
+Use Node.js 20, `npm install`, `npm run build`, and `npm run start`. Configure the platform-provided `PORT` and health-check path `/api/health`.
+
+### Required environment variables
+
+Set Firebase values `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, and `NEXT_PUBLIC_FIREBASE_APP_ID`. Optional values are `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` and `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`. Set `GEMINI_API_KEY` as a server-only secret; never use a `NEXT_PUBLIC_` prefix for it.
+
+For each deployed hostname, configure Firebase Authentication's authorized domains and enable the Google provider. Deploy and review `firestore.rules` before using cloud saves.
+
+See [docs/ANTIDEPLOY.md](docs/ANTIDEPLOY.md) for full setup and verification steps for all three providers.
+
+A successful build or health response is not a substitute for end-to-end testing of sign-in, Firestore, AI generation, imports, and exports.
 
 ## 09 / Contributing
 
