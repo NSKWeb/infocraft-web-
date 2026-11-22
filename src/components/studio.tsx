@@ -59,6 +59,7 @@ export default function Studio() {
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [exportFormat, setExportFormat] = useState<"standard" | "pinterest">("standard");
+  const [exportType, setExportType] = useState<"png"|"jpeg"|"webp"|"pdf">("png");
   const [dark, setDark] = useState(true);
   const [resolution, setResolution] = useState("2K");
   const [ratio, setRatio] = useState("4:5");
