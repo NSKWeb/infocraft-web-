@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="440" viewBox="0 0 1400 440" role="img" aria-labelledby="title desc">
+<title id="title">InfoCraft workflow</title><desc id="desc">Start with text or photo, generate, refine, discuss, create a poster, then save or share.</desc>
+<rect width="1400" height="440" rx="24" fill="#F4F1E9"/><g font-family="Arial,Helvetica,sans-serif">
+<text x="64" y="68" fill="#E94B35" font-size="18" font-weight="700" letter-spacing="4">05 / THE CREATIVE LOOP</text><text x="64" y="118" fill="#171717" font-size="42" font-weight="800">From raw input to a finished visual.</text>
+<g transform="translate(64 174)">
+<g><rect width="184" height="156" rx="14" fill="#171717"/><text x="22" y="42" fill="#E94B35" font-size="16" font-weight="700">01 / INPUT</text><text x="22" y="86" fill="#F4F1E9" font-size="23" font-weight="700">Text or</text><text x="22" y="116" fill="#F4F1E9" font-size="23" font-weight="700">photo</text></g>
+<path d="M194 78H226M216 68L228 78L216 88" stroke="#E94B35" stroke-width="4" fill="none"/>
+<g transform="translate(244)"><rect width="184" height="156" rx="14" fill="#FFFFFF" stroke="#C9C1B5" stroke-width="2"/><text x="22" y="42" fill="#E94B35" font-size="16" font-weight="700">02 / GENERATE</text><text x="22" y="86" fill="#171717" font-size="23" font-weight="700">AI structure</text><text x="22" y="116" fill="#514D46" font-size="16">Sections + metrics</text></g>
+<path d="M438 78H470M460 68L472 78L460 88" stroke="#E94B35" stroke-width="4" fill="none"/>
+<g transform="translate(488)"><rect width="184" height="156" rx="14" fill="#FFFFFF" stroke="#C9C1B5" stroke-width="2"/><text x="22" y="42" fill="#E94B35" font-size="16" font-weight="700">03 / REFINE</text><text x="22" y="86" fill="#171717" font-size="23" font-weight="700">Canvas</text><text x="22" y="116" fill="#514D46" font-size="16">Layout + palette</text></g>
+<path d="M682 78H714M704 68L716 78L704 88" stroke="#E94B35" stroke-width="4" fill="none"/>
+<g transform="translate(732)"><rect width="184" height="156" rx="14" fill="#FFFFFF" stroke="#C9C1B5" stroke-width="2"/><text x="22" y="42" fill="#E94B35" font-size="16" font-weight="700">04 / DISCUSS</text><text x="22" y="86" fill="#171717" font-size="23" font-weight="700">AI director</text><text x="22" y="116" fill="#514D46" font-size="16">Apply suggestions</text></g>
+<path d="M926 78H958M948 68L960 78L948 88" stroke="#E94B35" stroke-width="4" fill="none"/>
+<g transform="translate(976)"><rect width="184" height="156" rx="14" fill="#171717"/><text x="22" y="42" fill="#E94B35" font-size="16" font-weight="700">05 / CREATE</text><text x="22" y="86" fill="#F4F1E9" font-size="23" font-weight="700">Poster</text><text x="22" y="116" fill="#C8C2B8" font-size="16">Image-led output</text></g>
+<path d="M1170 78H1202M1192 68L1204 78L1192 88" stroke="#E94B35" stroke-width="4" fill="none"/>
+<g transform="translate(1220)"><rect width="52" height="156" rx="14" fill="#E94B35"/><path d="M16 78H36M26 68V88" stroke="#F4F1E9" stroke-width="4"/></g>
+</g><text x="64" y="386" fill="#514D46" font-size="17">Save projects to your library · Export a PNG · Share from Android</text>
+</g></svg>
