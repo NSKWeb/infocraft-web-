@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="560" viewBox="0 0 1600 560" role="img" aria-labelledby="title desc">
+<title id="title">InfoCraft — Visual stories, engineered with AI</title><desc id="desc">Swiss editorial banner with warm paper, vermilion accent, grid lines, and bold typography.</desc>
+<rect width="1600" height="560" fill="#F4F1E9"/>
+<g stroke="#D8D2C7" stroke-width="1" opacity=".8"><path d="M80 0V560M320 0V560M560 0V560M800 0V560M1040 0V560M1280 0V560M1520 0V560"/><path d="M0 96H1600M0 192H1600M0 288H1600M0 384H1600M0 480H1600"/></g>
+<rect x="80" y="72" width="12" height="416" fill="#E94B35"/>
+<text x="128" y="112" fill="#55514A" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700" letter-spacing="5">ANDROID · AI INFOGRAPHIC &amp; POSTER STUDIO</text>
+<text x="122" y="282" fill="#171717" font-family="Arial,Helvetica,sans-serif" font-size="132" font-weight="800" letter-spacing="-7">INFOCRAFT</text>
+<text x="130" y="354" fill="#E94B35" font-family="Arial,Helvetica,sans-serif" font-size="30" font-weight="700" letter-spacing="2">VISUAL STORIES, ENGINEERED WITH AI.</text>
+<text x="130" y="420" fill="#514D46" font-family="Arial,Helvetica,sans-serif" font-size="24">Turn raw information into clear, editorial-grade visual stories.</text>
+<g transform="translate(1160 130)"><rect width="300" height="300" fill="#171717"/><rect x="24" y="24" width="252" height="252" fill="#F4F1E9"/><rect x="44" y="44" width="92" height="92" fill="#E94B35"/><rect x="152" y="44" width="104" height="12" fill="#171717"/><rect x="152" y="68" width="80" height="8" fill="#9A958B"/><rect x="152" y="88" width="104" height="8" fill="#9A958B"/><rect x="44" y="156" width="212" height="2" fill="#171717"/><text x="44" y="222" fill="#171717" font-family="Arial,Helvetica,sans-serif" font-size="54" font-weight="800">34%</text><text x="46" y="250" fill="#514D46" font-family="Arial,Helvetica,sans-serif" font-size="12" letter-spacing="2">VISUAL SIGNAL</text></g>
+<text x="130" y="510" fill="#777168" font-family="Arial,Helvetica,sans-serif" font-size="16" letter-spacing="3">KOTLIN / JETPACK COMPOSE / FIREBASE AI LOGIC</text><text x="1520" y="510" text-anchor="end" fill="#777168" font-family="Arial,Helvetica,sans-serif" font-size="16" letter-spacing="3">01 — INFOCRAFT</text>
+</svg>
