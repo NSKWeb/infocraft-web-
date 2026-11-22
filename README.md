@@ -52,6 +52,123 @@ The design direction is:
 
 The long-term product direction includes text-to-infographic creation, photo understanding, assisted editing, poster generation, project management and optional research grounding. Not every planned capability is available yet.
 
+## InfoCraft at a glance — visual guide
+
+> New to the project? Start with these visual maps. They explain what the app is, how its current pieces connect, and what a deployment actually checks.
+
+### 1. The product in one picture
+
+```mermaid
+flowchart LR
+    A["📝 Source text"] --> B["✨ Create workspace"]
+    B --> C["🧩 Structured draft"]
+    C --> D["🎨 Editable canvas"]
+    D --> E["🖼️ PNG export"]
+    D -. "Later: cloud save" .-> F["☁️ Library sync"]
+    B -. "AI route exists; UI wiring pending" .-> G["🤖 Gemini API"]
+    style A fill:#eee9df,stroke:#c8bca9,color:#242424
+    style B fill:#f7d9cf,stroke:#d94c36,color:#242424
+    style C fill:#eee9df,stroke:#c8bca9,color:#242424
+    style D fill:#dce5f4,stroke:#5275aa,color:#242424
+    style E fill:#dcebdd,stroke:#6c9a73,color:#242424
+```
+
+**In plain language:** provide information → create a draft → refine the layout → export the visual. The dotted connections are future or not-yet-wired integrations, not finished features.
+
+### 2. How the current app is organized
+
+```mermaid
+flowchart TB
+    U["👤 User"] --> UI["Next.js app / React studio"]
+    UI --> CREATE["Create · Canvas · Poster · Art Director · Library"]
+    CREATE --> LOCAL["Local draft and browser-session state"]
+    CREATE --> EXPORT["PNG export"]
+    UI --> API["POST /api/ai/infographic"]
+    API --> VALIDATE["Zod schema validation"]
+    VALIDATE --> GEMINI["Google Gemini API"]
+    UI --> HEALTH["GET /api/health"]
+    FIREBASE["Firebase helper"] -. "Not yet connected to sign-in or cloud saves" .- UI
+    style UI fill:#dce5f4,stroke:#5275aa,color:#202020
+    style API fill:#f7d9cf,stroke:#d94c36,color:#202020
+    style GEMINI fill:#eee9df,stroke:#c8bca9,color:#202020
+    style FIREBASE fill:#f4edcf,stroke:#b69c43,color:#202020
+```
+
+**What this means:** the browser renders the studio; the Next.js server exposes API routes; the AI route validates structured output. Firebase is currently only an initialization helper. The Create screen still makes a local fallback draft rather than calling the AI route.
+
+### 3. The five workspace areas
+
+```mermaid
+flowchart TD
+    HOME["InfoCraft Studio"]
+    HOME --> A["01 · Create"]
+    HOME --> B["02 · Canvas"]
+    HOME --> C["03 · Poster Studio"]
+    HOME --> D["04 · AI Art Director"]
+    HOME --> E["05 · Library"]
+    A --> A1["Enter source text / sample prompt"]
+    B --> B1["Edit title, subtitle, hero metric"]
+    B --> B2["Choose template and palette"]
+    C --> C1["Poster interface foundation"]
+    D --> D1["Static guidance UI"]
+    E --> E1["Current browser-session projects"]
+```
+
+| Workspace | Think of it as… | Current state |
+|---|---|---|
+| Create | The starting desk | Text input + local draft creation |
+| Canvas | The design table | Editable content and visual choices |
+| Poster Studio | The poster workbench | Interface foundation |
+| AI Art Director | A creative assistant | Static guidance, not live AI chat |
+| Library | Your project shelf | Session-only; not cloud synced |
+
+### 4. From GitHub to Antideploy
+
+```mermaid
+flowchart TD
+    A["📦 GitHub: NSKWeb/infocraft-web-"] --> B["🌿 main branch"]
+    B --> C["⚙️ GitHub Actions"]
+    C --> D["Install dependencies"]
+    D --> E["TypeScript check"]
+    E --> F["ESLint"]
+    F --> G["Next.js production build"]
+    G --> H["🚀 Antideploy Node.js service"]
+    H --> I["GET /api/health"]
+    I --> J["Open app and smoke-test real features"]
+    style C fill:#dce5f4,stroke:#5275aa,color:#202020
+    style H fill:#f7d9cf,stroke:#d94c36,color:#202020
+    style J fill:#dcebdd,stroke:#6c9a73,color:#202020
+```
+
+**Important:** a green CI/build and a healthy `/api/health` response are not the same as a fully tested product. Sign-in, AI, uploads, persistence and other external services must be tested separately when implemented.
+
+### 5. What works now vs. what comes next
+
+| <span>🟢</span> Available foundation | <span>🟡</span> Needs integration / completion |
+|---|---|
+| Responsive studio shell | Firebase sign-in |
+| Dark-first UI and light appearance | Firestore cloud Library |
+| Local structured draft | Create screen → Gemini API |
+| Editable canvas controls | Photo understanding |
+| Template and palette selectors | Live AI Art Director |
+| Browser-session Library | AI poster/image generation |
+| PNG export action | Web research grounding and citations |
+| Health route + deployment guide | Full production smoke tests |
+
+### 6. A simple mental model
+
+<blockquote>
+  **Frontend = what people see.**  
+  **API routes = the server-side doorway.**  
+  **AI provider = the content engine.**  
+  **Firebase = the planned identity and cloud-data layer.**  
+  **Antideploy = where the web app runs.**
+</blockquote>
+
+If you are contributing code, use the [repository structure](#repository-structure), then follow [Run locally](#run-locally). If you are deploying, jump to [Antideploy deployment](#antideploy-deployment).
+
+---
+
 ## Interface overview
 
 The current workspace is organized into five destinations:
