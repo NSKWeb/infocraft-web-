@@ -307,6 +307,52 @@ export default function Studio() {
   async function importPdf(file: File) { const form=new FormData(); form.append("file",file); try { const response=await fetch("/api/import/pdf",{method:"POST",body:form}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setSource(data.text); setSourceName(file.name+" · "+data.pages+" pages"); setNotice("PDF text extracted. Review before generating."); } catch(error) { setNotice(error instanceof Error?error.message:"PDF import failed."); } }
   async function importUrl() { if (!urlInput.trim()) return; try { const response=await fetch("/api/import/url",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:urlInput.trim()})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setSource(data.text); setSourceName(data.title||"Imported webpage"); setNotice("Webpage imported. Review source text before generating."); } catch(error) { setNotice(error instanceof Error?error.message:"URL import failed."); } }
   async function generatePoster() { setPosterBusy(true); try { const response=await fetch("/api/ai/poster",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:project.title+". "+project.subtitle+". "+project.takeawayQuote,ratio})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setPosterImage(data.image); setNotice("Poster background generated with Cloudflare FLUX. Add editable typography in Canvas."); } catch(error) { setNotice(error instanceof Error?error.message:"Poster generation failed."); } finally { setPosterBusy(false); } }
+  async function downloadPoster() {
+    if (!posterImage) return;
+    try {
+      const image = new Image();
+      image.src = posterImage;
+      await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error("Could not load the generated artwork.")); });
+      const targetWidth = 1200;
+      const ratioValue: Record<string, number> = { "1:1": 1, "4:5": 4 / 5, "9:16": 9 / 16, "16:9": 16 / 9 };
+      const targetHeight = Math.round(targetWidth / (ratioValue[ratio] || 4 / 5));
+      const canvas = document.createElement("canvas");
+      canvas.width = targetWidth; canvas.height = targetHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Your browser could not prepare the poster export.");
+      const sourceRatio = image.width / image.height;
+      const targetRatio = targetWidth / targetHeight;
+      let sx = 0, sy = 0, sw = image.width, sh = image.height;
+      if (sourceRatio > targetRatio) { sw = image.height * targetRatio; sx = (image.width - sw) / 2; }
+      else { sh = image.width / targetRatio; sy = (image.height - sh) / 2; }
+      ctx.drawImage(image, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
+      const gradient = ctx.createLinearGradient(0, targetHeight * .48, 0, targetHeight);
+      gradient.addColorStop(0, "rgba(0,0,0,0)");
+      gradient.addColorStop(1, "rgba(0,0,0,.82)");
+      ctx.fillStyle = gradient; ctx.fillRect(0, 0, targetWidth, targetHeight);
+      const margin = 88, maxWidth = targetWidth - margin * 2;
+      const wrap = (value: string, font: string) => {
+        ctx.font = font; const lines: string[] = []; let line = "";
+        for (const word of value.split(/\\s+/)) {
+          const next = line ? line + " " + word : word;
+          if (line && ctx.measureText(next).width > maxWidth) { lines.push(line); line = word; } else line = next;
+        }
+        if (line) lines.push(line); return lines;
+      };
+      const titleLines = wrap(project.title || "InfoCraft", "700 72px Arial").slice(0, 3);
+      const subtitleLines = wrap(project.subtitle || "", "30px Arial").slice(0, 3);
+      const blockHeight = titleLines.length * 82 + subtitleLines.length * 42 + 28;
+      let y = targetHeight - margin - blockHeight;
+      ctx.fillStyle = "#ffffff"; ctx.font = "700 72px Arial";
+      titleLines.forEach(line => { ctx.fillText(line, margin, y + 72); y += 82; });
+      ctx.font = "30px Arial";
+      subtitleLines.forEach(line => { ctx.fillText(line, margin, y + 30); y += 42; });
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error("Poster export failed.")), "image/png"));
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a"); link.href = url; link.download = "infocraft-poster-" + ratio.replace(":", "x") + ".png"; link.click();
+      URL.revokeObjectURL(url); setNotice("Composed poster downloaded with editable project title and subtitle.");
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Poster export failed."); }
+  }
   async function makeSocialCopy() { try { const response=await fetch("/api/ai/director",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:"Create Pinterest SEO copy: pin title, keyword-rich description, relevant hashtags and accessible alt text. Label each.",project})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setSocialCopy(data.reply); } catch(error) { setNotice(error instanceof Error?error.message:"Could not create social copy."); } }
 
   return <main className={dark?"studio":"studio light"}>
@@ -347,7 +393,7 @@ export default function Studio() {
           <div className="preview-wrap"><div className="preview-top"><span>LIVE PREVIEW <i/></span><span>1080 × 1350 / PORTRAIT</span></div><div id="infographic-export" className={"infographic poster-"+project.paletteId}><div className="poster-top"><span>{project.kickerTag}</span><span>INFO / 0{project.sections.length}</span></div><div className="poster-title">{project.title}</div><div className="poster-subtitle">{project.subtitle}</div><div className="hero-stat"><strong>{project.heroStatValue}</strong><div><b>{project.heroStatLabel}</b><small>{project.heroStatDelta}</small></div></div><div className="poster-sections">{project.sections.slice(0,6).map((s,i)=><article key={s.indexLabel} className="poster-section"><span>{s.indexLabel}</span><div><b>{s.heading}</b><p>{s.summary}</p><div className="meter"><i style={{width:`${s.barRatio*100}%`}}/></div></div><strong>{s.metricValue}</strong></article>)}</div><blockquote>{project.takeawayQuote}</blockquote><div className="poster-footer"><span>INFOCRAFT / VISUAL RESEARCH</span><span>CLARITY, COMPOSED.</span></div></div>{project.citations.length>0&&<div className="citation-list"><b>Research sources</b>{project.citations.map((citation,i)=><a key={i} href={citation.uri} target="_blank" rel="noreferrer">{citation.title}</a>)}</div>}<div className="canvas-bottom"><span>{user?"Cloud sync available":"Draft changes are local until saved."}</span><button className="text-btn" onClick={()=>setActive("director")}>Ask Art Director <ArrowRight size={14}/></button></div></div></div>
         </section>}
 
-        {active==="poster"&&<section className="page narrow"><div className="eyebrow">03 / IMAGE-LED COMPOSITION</div><h1>Poster <em>studio.</em></h1><p className="lede">Transform the active story into an image-led poster composition.</p><div className="input-card poster-card"><div className="eyebrow">IMAGE PROVIDER</div><div className="provider-note"><b>Cloudflare Workers AI · FLUX.1 Schnell</b><small>Free daily quota applies. No paid fallback is configured.</small></div><div className="eyebrow">ASPECT RATIO</div><div className="segmented">{["1:1","4:5","9:16","16:9"].map(v=><button className={ratio===v?"active":""} onClick={()=>setRatio(v)} key={v}>{v}</button>)}</div>{posterImage?<img className="generated-poster" src={posterImage} alt="Generated poster"/>:<div className="poster-placeholder"><ImagePlus size={30}/><b>Ready to compose</b><span>{project.title}</span><small>Cloudflare generates the artwork; add accurate, editable text in the canvas.</small></div>}<button className="primary-btn full" disabled={posterBusy} onClick={generatePoster}><Sparkles size={16}/>{posterBusy?"Generating…":"Generate poster · "+ratio}</button>{posterImage&&<a className="secondary-btn" href={posterImage} download="infocraft-poster.png">Save poster</a>}</div></section>}
+        {active==="poster"&&<section className="page narrow"><div className="eyebrow">03 / IMAGE-LED COMPOSITION</div><h1>Poster <em>studio.</em></h1><p className="lede">Transform the active story into an image-led poster composition.</p><div className="input-card poster-card"><div className="eyebrow">IMAGE PROVIDER</div><div className="provider-note"><b>Cloudflare Workers AI · FLUX.1 Schnell</b><small>Free daily quota applies. No paid fallback is configured.</small></div><div className="eyebrow">COMPOSITION RATIO</div><div className="segmented">{["1:1","4:5","9:16","16:9"].map(v=><button className={ratio===v?"active":""} onClick={()=>setRatio(v)} key={v}>{v}</button>)}</div><small className="provider-hint">Ratio guides the composition prompt; the model controls its native image dimensions.</small>{posterImage?<div className="poster-composition-preview" style={{backgroundImage:"url("+posterImage+")"}}><div><span>INFOCRAFT / POSTER</span><h2>{project.title}</h2><p>{project.subtitle}</p></div></div>:<div className="poster-placeholder"><ImagePlus size={30}/><b>Ready to compose</b><span>{project.title}</span><small>Cloudflare generates the artwork; your project title and subtitle are overlaid as editable text in the preview.</small></div>}<button className="primary-btn full" disabled={posterBusy} onClick={generatePoster}><Sparkles size={16}/>{posterBusy?"Generating…":"Generate poster · "+ratio}</button>{posterImage&&<button className="secondary-btn full" onClick={downloadPoster}>Download composed poster · PNG</button>}</div></section>}
 
         {active==="director"&&<section className="page narrow"><div className="eyebrow">04 / CREATIVE COLLABORATION</div><h1>AI Art <em>Director.</em></h1><p className="lede">A focused editorial partner for stronger hierarchy, sharper copy, and clearer visual storytelling.</p><div className="chat-card"><div className="chat-head"><div className="director-avatar"><Sparkles/></div><div><b>InfoCraft Art Director</b><small>EDITORIAL INTELLIGENCE / SESSION</small></div><span className="online-dot"/></div><div className="chat-messages">{chat.map((m,i)=><div key={i} className={"message "+m.role}><span>{m.role==="assistant"?"ART DIRECTOR":"YOU"}</span><p>{m.text}</p></div>)}</div><div className="chat-compose"><input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="Ask for a sharper headline, clearer structure…"/><button className="primary-btn" onClick={sendChat}><ArrowRight size={17}/></button></div></div></section>}
 
