@@ -196,7 +196,7 @@ export default function Studio() {
       const colors = paletteColors[project.paletteId];
       const wrap = (value: string, maxWidth: number, font: string) => {
         ctx.font = font;
-        const words = String(value || "").split(/\\s+/);
+        const words = String(value || "").split(/\s+/);
         const lines: string[] = [];
         let line = "";
         for (const word of words) {
