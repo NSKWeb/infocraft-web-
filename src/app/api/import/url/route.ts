@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 
@@ -21,6 +22,8 @@ const blockedHost = (host: string) => {
 };
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await enforceRateLimit(request, { key: "import-url", limit: 10, windowMs: 60_000 });
+  if (rateLimitResponse) return rateLimitResponse;
   try {
     const { url } = await request.json() as { url?: string };
     if (!url || url.length > 2048) return NextResponse.json({ error: "Enter a valid public webpage URL." }, { status: 400 });
