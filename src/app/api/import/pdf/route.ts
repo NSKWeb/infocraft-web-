@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await enforceRateLimit(request, { key: "import-pdf", limit: 10, windowMs: 60_000 });
+  if (rateLimitResponse) return rateLimitResponse;
   try {
     const form = await request.formData();
     const file = form.get("file");
