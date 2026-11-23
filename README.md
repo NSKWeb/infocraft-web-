@@ -51,7 +51,7 @@ The **AI Art Director** can assist during refinement. Search grounding is an opt
 |---|---|
 | **Create** | Start an infographic from text, URLs, PDFs, or images, with AI-assisted structuring. |
 | **Canvas** | Refine the generated infographic, switch layouts and palettes, edit content, add/remove/reorder sections, and export. |
-| **Poster Studio** | Generate image-led poster backgrounds with Cloudflare Workers AI FLUX.1 Schnell; add editable typography in the canvas. |
+| **Poster Studio** | Generate image-led poster backgrounds with Cloudflare Workers AI FLUX.1 Schnell, with an optional opt-in Gemini image backup; add editable typography in the canvas. |
 | **AI Art Director** | Ask for editorial improvements and apply supported suggestions back to the canvas. |
 | **Pinterest SEO Studio** | Prepare pin titles, descriptions, hashtags, and image alt text for discovery workflows. |
 | **Library** | Browse saved projects and continue working with their associated content and chat history. |
@@ -93,7 +93,7 @@ The **AI Art Director** can assist during refinement. Search grounding is an opt
 
 ### Poster and export controls
 
-Poster Studio generates image backgrounds with Cloudflare Workers AI **FLUX.1 Schnell** and supports aspect-ratio composition prompts. Add titles, subtitles, logos, and other typography as editable canvas elements. The image model controls its native output dimensions; canvas export supports **PNG, JPEG, and WebP**, with scaled output options and portrait/Pinterest-oriented sizing.
+Poster Studio generates image backgrounds with Cloudflare Workers AI **FLUX.1 Schnell** and supports aspect-ratio composition prompts. An optional Gemini image backup (`gemini-3.1-flash-image`) can be enabled explicitly with `POSTER_GEMINI_FALLBACK_ENABLED=true`; it is disabled by default because image generation may incur charges. Add titles, subtitles, logos, and other typography as editable canvas elements. The image model controls its native output dimensions; canvas export supports **PNG, JPEG, and WebP**, with scaled output options and portrait/Pinterest-oriented sizing.
 
 ## 03 / Product workflow
 
@@ -197,7 +197,7 @@ When a committed lockfile is available, use `npm ci` for reproducible installs.
 cp .env.example .env.local
 ~~~
 
-Add Firebase and `GEMINI_API_KEY` for the existing Gemini-powered workflows. Add `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` to enable Poster Studio. For production, also configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from an Upstash Redis database. Keep `.env.local` private and never commit it.
+Add Firebase and `GEMINI_API_KEY` for the existing Gemini-powered workflows. Add `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` to enable the primary Poster Studio provider. The optional Gemini image backup requires `POSTER_GEMINI_FALLBACK_ENABLED=true` and may incur paid image-generation charges; it is OFF by default. For production, also configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from an Upstash Redis database. Keep `.env.local` private and never commit it.
 
 ### 4. Start the development server
 
@@ -226,7 +226,7 @@ npm run start
 ## 06 / Configuration and security notes
 
 - **Gemini:** set `GEMINI_API_KEY` as a server-side environment secret. Never expose it through a `NEXT_PUBLIC_*` variable.
-- **Poster image generation:** set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` as server-only secrets. Poster Studio uses `@cf/black-forest-labs/flux-1-schnell`; no paid-provider fallback is configured. The free Workers AI allocation is shared across account usage and resets daily at 00:00 UTC; requests stop with a quota message when Cloudflare rejects usage. FLUX output dimensions are model-controlled, not guaranteed by the old 1K/2K/4K selector.
+- **Poster image generation:** set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` as server-only secrets. Poster Studio uses `@cf/black-forest-labs/flux-1-schnell` as primary. An optional Gemini backup uses `gemini-3.1-flash-image` only when `POSTER_GEMINI_FALLBACK_ENABLED=true`; this is OFF by default and can incur paid charges. The existing `GEMINI_API_KEY` is reused server-side. The backup is scoped to the poster route and does not change infographic or AI Art Director behavior. The free Workers AI allocation is shared across account usage; quota failures can trigger the Gemini backup only when explicitly enabled. FLUX output dimensions are model-controlled, not guaranteed by the old 1K/2K/4K selector.
 - **API rate limiting:** set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in production. These provide shared counters across serverless instances. Local development can use the in-memory fallback; production fails closed with HTTP 503 if Redis is not configured or unavailable.
 - **Firebase Authentication:** enable the Google provider and configure authorized domains for local and deployed environments.
 - **Firestore:** review and deploy the repository's `firestore.rules`; verify owner-scoped access with separate test accounts.
