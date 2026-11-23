@@ -51,7 +51,7 @@ The **AI Art Director** can assist during refinement. Search grounding is an opt
 |---|---|
 | **Create** | Start an infographic from text, URLs, PDFs, or images, with AI-assisted structuring. |
 | **Canvas** | Refine the generated infographic, switch layouts and palettes, edit content, add/remove/reorder sections, and export. |
-| **Poster Studio** | Prepare AI poster requests from the active project, with resolution and aspect-ratio controls. |
+| **Poster Studio** | Generate image-led poster backgrounds with Cloudflare Workers AI FLUX.1 Schnell; add editable typography in the canvas. |
 | **AI Art Director** | Ask for editorial improvements and apply supported suggestions back to the canvas. |
 | **Pinterest SEO Studio** | Prepare pin titles, descriptions, hashtags, and image alt text for discovery workflows. |
 | **Library** | Browse saved projects and continue working with their associated content and chat history. |
@@ -93,7 +93,7 @@ The **AI Art Director** can assist during refinement. Search grounding is an opt
 
 ### Poster and export controls
 
-The poster interface exposes **1K, 2K, and 4K** resolution choices and aspect-ratio selection. Canvas export supports **PNG, JPEG, and WebP**, with scaled output options and portrait/Pinterest-oriented sizing. Actual poster output availability and native resolution depend on the configured image-generation model and provider limits.
+Poster Studio generates image backgrounds with Cloudflare Workers AI **FLUX.1 Schnell** and supports aspect-ratio composition prompts. Add titles, subtitles, logos, and other typography as editable canvas elements. The image model controls its native output dimensions; canvas export supports **PNG, JPEG, and WebP**, with scaled output options and portrait/Pinterest-oriented sizing.
 
 ## 03 / Product workflow
 
@@ -124,7 +124,7 @@ InfoCraft Web uses a Next.js application with a browser-based React studio, serv
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS 4 tooling and component-level CSS |
 | State and validation | React state, shared TypeScript types, Zod |
-| AI integration | Google Gemini through server-side API routes |
+| AI integration | Google Gemini for existing AI workflows; Cloudflare Workers AI FLUX.1 Schnell for Poster Studio image backgrounds |
 | Authentication | Firebase Authentication, Google sign-in |
 | Project and chat data | Cloud Firestore |
 | Local draft storage | Browser localStorage |
@@ -225,6 +225,7 @@ npm run start
 ## 06 / Configuration and security notes
 
 - **Gemini:** set `GEMINI_API_KEY` as a server-side environment secret. Never expose it through a `NEXT_PUBLIC_*` variable.
+- **Poster image generation:** set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` as server-only secrets. Poster Studio uses `@cf/black-forest-labs/flux-1-schnell`; no paid-provider fallback is configured. The free Workers AI allocation is shared across account usage and resets daily at 00:00 UTC; requests stop with a quota message when Cloudflare rejects usage. FLUX output dimensions are model-controlled, not guaranteed by the old 1K/2K/4K selector.
 - **API rate limiting:** set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in production. These provide shared counters across serverless instances. Local development can use the in-memory fallback; production fails closed with HTTP 503 if Redis is not configured or unavailable.
 - **Firebase Authentication:** enable the Google provider and configure authorized domains for local and deployed environments.
 - **Firestore:** review and deploy the repository's `firestore.rules`; verify owner-scoped access with separate test accounts.
