@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await enforceRateLimit(request, { key: "ai-poster", limit: 3, windowMs: 60_000 });
+  if (rateLimitResponse) return rateLimitResponse;
   if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "Poster generation needs GEMINI_API_KEY on the server." }, { status: 503 });
   try {
     const { prompt, ratio = "4:5", resolution = "2K" } = await request.json() as { prompt?: string; ratio?: string; resolution?: string };

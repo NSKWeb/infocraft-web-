@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { infographicSchema } from "@/lib/infographic-schema";
 
 export const runtime = "nodejs";
@@ -9,6 +10,8 @@ type GeminiPart = { text?: string; inline_data?: { mime_type: string; data: stri
 type GeminiResponse = { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; groundingMetadata?: { groundingChunks?: Array<{ web?: { uri?: string; title?: string } }> } }>; error?: { message?: string } };
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await enforceRateLimit(request, { key: "ai-infographic", limit: 5, windowMs: 60_000 });
+  if (rateLimitResponse) return rateLimitResponse;
   if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "AI generation is not configured. Add GEMINI_API_KEY on the server." }, { status: 503 });
   try {
     const body = await request.json() as { sourceText?: string; model?: string; template?: string; imageBase64?: string; imageMimeType?: string; searchGrounded?: boolean; language?: string };

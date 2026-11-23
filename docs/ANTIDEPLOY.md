@@ -32,6 +32,10 @@ Optional Firebase values:
 Server-side AI secret:
 
 - `GEMINI_API_KEY` — keep this server-side; never prefix it with `NEXT_PUBLIC_`.
+- `UPSTASH_REDIS_REST_URL` — Upstash Redis REST database URL for shared API rate-limit counters.
+- `UPSTASH_REDIS_REST_TOKEN` — Upstash Redis REST token; keep it secret and server-side.
+
+**Production rate limiting:** configure both Upstash variables on every deployment target. Production API routes fail closed with HTTP 503 if Redis is missing or unavailable; local development uses a per-process in-memory fallback. Do not rely on the local fallback for production or multi-instance deployments. The limiter uses separate per-IP fixed windows for AI and import endpoints.
 
 Use the same Firebase project configuration across preview/production only if that is intentional. Add each deployed hostname to Firebase Authentication → Settings → Authorized domains, and enable the Google provider. Deploy and review `firestore.rules` before enabling cloud saves.
 
