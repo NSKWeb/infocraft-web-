@@ -27,3 +27,14 @@
 .input-card select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:10px;border-radius:6px}
 .input-card input[type=checkbox]{accent-color:var(--accent);margin-right:8px}
 @media(max-width:720px){.export-options .segmented{flex-wrap:wrap}.export-options .segmented button{min-width:70px}}
+
+/* Cloudflare FLUX poster composition */
+.provider-note{display:grid;gap:5px;padding:12px;border:1px solid var(--line);border-radius:7px;background:var(--bg);font-size:12px}
+.provider-note small,.provider-hint{color:var(--muted);font-size:10px;line-height:1.5}
+.provider-hint{display:block;margin-top:-4px}
+.poster-composition-preview{position:relative;display:flex;align-items:flex-end;min-height:420px;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--line);border-radius:8px;background-position:center;background-size:cover;background-color:#222}
+.poster-composition-preview:before{content:"";position:absolute;inset:25% 0 0;background:linear-gradient(180deg,transparent,rgba(0,0,0,.82))}
+.poster-composition-preview>div{position:relative;z-index:1;padding:clamp(18px,5vw,38px);color:#fff}
+.poster-composition-preview span{font-size:9px;letter-spacing:1.6px;font-weight:700;opacity:.8}
+.poster-composition-preview h2{font-size:clamp(25px,6vw,48px);line-height:1.04;margin:14px 0 10px;overflow-wrap:anywhere}
+.poster-composition-preview p{font-size:clamp(12px,2.5vw,16px);line-height:1.5;max-width:42ch;color:rgba(255,255,255,.86)}
