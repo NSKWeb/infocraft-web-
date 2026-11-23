@@ -119,11 +119,10 @@ export async function POST(request: NextRequest) {
   const useGeminiBackup = async (reason: string, status: number) => {
     if (!fallbackEnabled || !geminiApiKey) {
       if (status === 429) {
-        return jsonError(
-          "Cloudflare's free daily AI quota or rate limit has been reached. Gemini paid fallback is disabled. Enable POSTER_GEMINI_FALLBACK_ENABLED only if you accept possible Gemini image-generation charges.",
-          429,
-          "3600",
-        );
+        const message = !fallbackEnabled
+          ? "Cloudflare's free daily AI quota or rate limit has been reached. Gemini paid fallback is disabled. Enable POSTER_GEMINI_FALLBACK_ENABLED only if you accept possible Gemini image-generation charges."
+          : "Cloudflare's free daily AI quota or rate limit has been reached, but Gemini backup is missing GEMINI_API_KEY. Add the server-side key to use the configured backup.";
+        return jsonError(message, 429, "3600");
       }
       return jsonError(
         fallbackEnabled
