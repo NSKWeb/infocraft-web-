@@ -196,7 +196,7 @@ When a committed lockfile is available, use `npm ci` for reproducible installs.
 cp .env.example .env.local
 ~~~
 
-Add the credentials for the integrations you want to run. Keep `.env.local` private and never commit it.
+Add the credentials for the integrations you want to run. For production, also configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from an Upstash Redis database. Keep `.env.local` private and never commit it.
 
 ### 4. Start the development server
 
@@ -225,6 +225,7 @@ npm run start
 ## 06 / Configuration and security notes
 
 - **Gemini:** set `GEMINI_API_KEY` as a server-side environment secret. Never expose it through a `NEXT_PUBLIC_*` variable.
+- **API rate limiting:** set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in production. These provide shared counters across serverless instances. Local development can use the in-memory fallback; production fails closed with HTTP 503 if Redis is not configured or unavailable.
 - **Firebase Authentication:** enable the Google provider and configure authorized domains for local and deployed environments.
 - **Firestore:** review and deploy the repository's `firestore.rules`; verify owner-scoped access with separate test accounts.
 - **Source imports:** treat webpage text, PDF content, image input, and generated output as untrusted material.
@@ -250,7 +251,7 @@ InfoCraft Web is an evolving browser-based implementation. This table describes 
 | Firebase Authentication | Google sign-in integration present; provider/domain configuration required |
 | Cloud Library | Firestore project sync and owner-scoped rules present; deploy and test rules |
 | Chat persistence | Project-scoped Art Director message persistence present; verify multi-session behavior |
-| URL import | Public HTTP(S) webpage text extraction present; production network controls and rate limiting needed |
+| URL import | Public HTTP(S) webpage text extraction and per-IP rate limiting present; connection-level DNS pinning or equivalent egress controls still needed |
 | PDF import | Selectable-text extraction; scanned/image-only PDF OCR is not implemented |
 | Photo understanding | Image input for vision analysis; live model/key test required |
 | Search grounding | Optional workflow; verify supported model/API combination |
@@ -259,7 +260,8 @@ InfoCraft Web is an evolving browser-based implementation. This table describes 
 
 ### Important operational caveats
 
-- **URL import hardening:** before exposing the importer to untrusted public traffic, add connection-level DNS pinning or equivalent egress controls and production rate limiting. URL/IP checks, redirect restrictions, timeouts, and response-size limits alone are not a complete production SSRF defense.
+- **URL import hardening:** per-IP rate limiting is implemented, but connection-level DNS pinning or equivalent egress controls are still needed before treating the importer as fully hardened. URL/IP checks, redirect restrictions, timeouts, response-size limits, and rate limiting alone are not a complete production SSRF defense.
+- **Rate-limit policy:** infographic generation 5 requests/minute/IP, poster generation 3/minute/IP, AI Art Director 20/minute/IP, PDF import 10/minute/IP, and URL import 10/minute/IP. HTTP 429 responses include `Retry-After`; production Redis errors fail closed with HTTP 503.
 - **Poster output dimensions:** selecting 1K/2K/4K does not guarantee that the provider returns an image at those exact native pixel dimensions.
 - **Scanned PDFs:** OCR for image-only or scanned PDFs is not included.
 - **Browser validation:** code paths existing in the repository do not prove that all browser workflows, provider integrations, Firestore rules, and deployment settings have passed live tests.
