@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok || !image) {
       const providerMessage = payload?.errors?.map(item => item.message).filter(Boolean).join("; ") ?? "";
-      const quotaFailure = response.status === 429 || /quota|neuron|daily limit|rate.?limit/i.test(providerMessage);
+      const quotaFailure = response.status === 429 || /quota|neuron|daily limit|rate.?limit|exceed.{0,30}(free|daily|neuron)/i.test(providerMessage);
       if (quotaFailure) {
         return NextResponse.json(
           { error: "Cloudflare's free daily AI quota or rate limit has been reached. No paid provider was contacted. Please try again after the quota resets." },
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       }
       return NextResponse.json(
         { error: "Cloudflare could not generate this poster right now. Please try again later." },
-        { status: response.status >= 500 ? 502 : 502 },
+        { status: 502 },
       );
     }
 
