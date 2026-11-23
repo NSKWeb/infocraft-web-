@@ -32,6 +32,9 @@ Optional Firebase values:
 Server-side AI secret:
 
 - `GEMINI_API_KEY` — keep this server-side; never prefix it with `NEXT_PUBLIC_`.
+- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare account ID for Poster Studio image generation.
+- `CLOUDFLARE_API_TOKEN` — server-side API token with Workers AI permissions; used only by Poster Studio.
+- `POSTER_GEMINI_FALLBACK_ENABLED` — optional; set to `true` to allow Gemini image generation as a backup for Poster Studio only. Default is `false`; image generation may incur paid charges. Requires `GEMINI_API_KEY`.
 - `UPSTASH_REDIS_REST_URL` — Upstash Redis REST database URL for shared API rate-limit counters.
 - `UPSTASH_REDIS_REST_TOKEN` — Upstash Redis REST token; keep it secret and server-side.
 
@@ -128,6 +131,9 @@ NEXT_PUBLIC_FIREBASE_APP_ID=...
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 GEMINI_API_KEY=...
+CLOUDFLARE_ACCOUNT_ID=...
+CLOUDFLARE_API_TOKEN=...
+POSTER_GEMINI_FALLBACK_ENABLED=false
 ```
 
 Set only the optional Firebase values you use. Keep `GEMINI_API_KEY` server-side. Restrict access to the file (for example, owner root and group-readable only by the app service group). Never commit it.
@@ -215,14 +221,14 @@ A healthy process and health endpoint do not prove that Firebase/Gemini credenti
 4. Test Firestore save, list, load, and delete using an authenticated account.
 5. Test Gemini-backed generation and the AI Art Director.
 6. Test URL/PDF/image import and canvas exports.
-7. Test poster generation separately; provider availability, quotas, and output dimensions depend on the configured model.
+7. Test Poster Studio separately using Cloudflare Workers AI (`@cf/black-forest-labs/flux-1-schnell`). Configure `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`; when the Cloudflare quota/rate limit is reached, the route returns a clear quota message unless the optional Gemini backup is enabled. Set `POSTER_GEMINI_FALLBACK_ENABLED=true` to permit the server to use `gemini-3.1-flash-image` for Poster Studio only. This can incur paid image-generation charges and is disabled by default. The model returns a generated image rather than a guaranteed 1K/2K/4K native output.
 8. Verify preview and production hostnames are included in Firebase authorized domains.
 
 A successful build and health response confirm only basic deployment health; they do not prove every third-party integration is configured correctly.
 
 ## Production security notes
 
-- Keep `GEMINI_API_KEY` in server-only environment settings.
+- Keep `GEMINI_API_KEY`, `CLOUDFLARE_ACCOUNT_ID`, and `CLOUDFLARE_API_TOKEN` in server-only environment settings. Cloudflare credentials are used only for Poster Studio. The optional `POSTER_GEMINI_FALLBACK_ENABLED` flag affects only the poster route; existing Gemini infographic and AI Art Director routes are unchanged.
 - Firebase web configuration is browser-visible by design; secure data with Authentication and Firestore Rules.
 - Do not set `FIRESTORE_EMULATOR_HOST` in production.
 - Before exposing URL import to public traffic, add connection-level DNS pinning or equivalent egress controls and production rate limiting. URL/IP checks and redirect restrictions alone are not a complete SSRF defense.

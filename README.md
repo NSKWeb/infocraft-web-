@@ -51,7 +51,7 @@ The **AI Art Director** can assist during refinement. Search grounding is an opt
 |---|---|
 | **Create** | Start an infographic from text, URLs, PDFs, or images, with AI-assisted structuring. |
 | **Canvas** | Refine the generated infographic, switch layouts and palettes, edit content, add/remove/reorder sections, and export. |
-| **Poster Studio** | Prepare AI poster requests from the active project, with resolution and aspect-ratio controls. |
+| **Poster Studio** | Generate image-led poster backgrounds with Cloudflare Workers AI FLUX.1 Schnell, with an optional opt-in Gemini image backup; add editable typography in the canvas. |
 | **AI Art Director** | Ask for editorial improvements and apply supported suggestions back to the canvas. |
 | **Pinterest SEO Studio** | Prepare pin titles, descriptions, hashtags, and image alt text for discovery workflows. |
 | **Library** | Browse saved projects and continue working with their associated content and chat history. |
@@ -93,7 +93,7 @@ The **AI Art Director** can assist during refinement. Search grounding is an opt
 
 ### Poster and export controls
 
-The poster interface exposes **1K, 2K, and 4K** resolution choices and aspect-ratio selection. Canvas export supports **PNG, JPEG, and WebP**, with scaled output options and portrait/Pinterest-oriented sizing. Actual poster output availability and native resolution depend on the configured image-generation model and provider limits.
+Poster Studio generates image backgrounds with Cloudflare Workers AI **FLUX.1 Schnell** and supports aspect-ratio composition prompts. An optional Gemini image backup (`gemini-3.1-flash-image`) can be enabled explicitly with `POSTER_GEMINI_FALLBACK_ENABLED=true`; it is disabled by default because image generation may incur charges. Add titles, subtitles, logos, and other typography as editable canvas elements. The image model controls its native output dimensions; canvas export supports **PNG, JPEG, and WebP**, with scaled output options and portrait/Pinterest-oriented sizing.
 
 ## 03 / Product workflow
 
@@ -124,7 +124,7 @@ InfoCraft Web uses a Next.js application with a browser-based React studio, serv
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS 4 tooling and component-level CSS |
 | State and validation | React state, shared TypeScript types, Zod |
-| AI integration | Google Gemini through server-side API routes |
+| AI integration | Google Gemini for existing AI workflows; Cloudflare Workers AI FLUX.1 Schnell for Poster Studio image backgrounds |
 | Authentication | Firebase Authentication, Google sign-in |
 | Project and chat data | Cloud Firestore |
 | Local draft storage | Browser localStorage |
@@ -164,6 +164,7 @@ The repository tree is the source of truth for exact file names; this is a high-
 - **Zod** validates request and generated data at application boundaries.
 - **Firebase Authentication** provides Google sign-in; **Firestore** stores user-owned projects and project-scoped chat data.
 - **Gemini** powers configured infographic and creative-assistance workflows.
+- **Cloudflare Workers AI FLUX.1 Schnell** powers only Poster Studio image backgrounds; it does not replace Gemini in other features.
 - **Google Search grounding** is optional and only available for supported model/API combinations.
 
 ## 05 / Getting started
@@ -196,7 +197,7 @@ When a committed lockfile is available, use `npm ci` for reproducible installs.
 cp .env.example .env.local
 ~~~
 
-Add the credentials for the integrations you want to run. For production, also configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from an Upstash Redis database. Keep `.env.local` private and never commit it.
+Add Firebase and `GEMINI_API_KEY` for the existing Gemini-powered workflows. Add `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` to enable the primary Poster Studio provider. The optional Gemini image backup requires `POSTER_GEMINI_FALLBACK_ENABLED=true` and may incur paid image-generation charges; it is OFF by default. For production, also configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from an Upstash Redis database. Keep `.env.local` private and never commit it.
 
 ### 4. Start the development server
 
@@ -225,6 +226,7 @@ npm run start
 ## 06 / Configuration and security notes
 
 - **Gemini:** set `GEMINI_API_KEY` as a server-side environment secret. Never expose it through a `NEXT_PUBLIC_*` variable.
+- **Poster image generation:** set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` as server-only secrets. Poster Studio uses `@cf/black-forest-labs/flux-1-schnell` as primary. An optional Gemini backup uses `gemini-3.1-flash-image` only when `POSTER_GEMINI_FALLBACK_ENABLED=true`; this is OFF by default and can incur paid charges. The existing `GEMINI_API_KEY` is reused server-side. The backup is scoped to the poster route and does not change infographic or AI Art Director behavior. The free Workers AI allocation is shared across account usage; quota failures can trigger the Gemini backup only when explicitly enabled. FLUX output dimensions are model-controlled, not guaranteed by the old 1K/2K/4K selector.
 - **API rate limiting:** set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in production. These provide shared counters across serverless instances. Local development can use the in-memory fallback; production fails closed with HTTP 503 if Redis is not configured or unavailable.
 - **Firebase Authentication:** enable the Google provider and configure authorized domains for local and deployed environments.
 - **Firestore:** review and deploy the repository's `firestore.rules`; verify owner-scoped access with separate test accounts.
@@ -247,7 +249,7 @@ InfoCraft Web is an evolving browser-based implementation. This table describes 
 | Pinterest SEO Studio | Generation workflow implemented; requires Gemini configuration and output review |
 | Canvas export | PNG, JPEG, WebP and scaled export options; cross-browser validation still needed |
 | PDF export | Uses browser print dialog; not a server-generated PDF pipeline |
-| Poster Studio | UI and image-generation API route present; provider output dimensions are not guaranteed |
+| Poster Studio | Cloudflare FLUX.1 Schnell background generation and text-overlay preview/export; configure Cloudflare credentials and test live quota handling |
 | Firebase Authentication | Google sign-in integration present; provider/domain configuration required |
 | Cloud Library | Firestore project sync and owner-scoped rules present; deploy and test rules |
 | Chat persistence | Project-scoped Art Director message persistence present; verify multi-session behavior |
