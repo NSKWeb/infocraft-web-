@@ -164,6 +164,7 @@ The repository tree is the source of truth for exact file names; this is a high-
 - **Zod** validates request and generated data at application boundaries.
 - **Firebase Authentication** provides Google sign-in; **Firestore** stores user-owned projects and project-scoped chat data.
 - **Gemini** powers configured infographic and creative-assistance workflows.
+- **Cloudflare Workers AI FLUX.1 Schnell** powers only Poster Studio image backgrounds; it does not replace Gemini in other features.
 - **Google Search grounding** is optional and only available for supported model/API combinations.
 
 ## 05 / Getting started
@@ -196,7 +197,7 @@ When a committed lockfile is available, use `npm ci` for reproducible installs.
 cp .env.example .env.local
 ~~~
 
-Add the credentials for the integrations you want to run. For production, also configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from an Upstash Redis database. Keep `.env.local` private and never commit it.
+Add Firebase and `GEMINI_API_KEY` for the existing Gemini-powered workflows. Add `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` to enable Poster Studio. For production, also configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from an Upstash Redis database. Keep `.env.local` private and never commit it.
 
 ### 4. Start the development server
 
@@ -248,7 +249,7 @@ InfoCraft Web is an evolving browser-based implementation. This table describes 
 | Pinterest SEO Studio | Generation workflow implemented; requires Gemini configuration and output review |
 | Canvas export | PNG, JPEG, WebP and scaled export options; cross-browser validation still needed |
 | PDF export | Uses browser print dialog; not a server-generated PDF pipeline |
-| Poster Studio | UI and image-generation API route present; provider output dimensions are not guaranteed |
+| Poster Studio | Cloudflare FLUX.1 Schnell background generation and text-overlay preview/export; configure Cloudflare credentials and test live quota handling |
 | Firebase Authentication | Google sign-in integration present; provider/domain configuration required |
 | Cloud Library | Firestore project sync and owner-scoped rules present; deploy and test rules |
 | Chat persistence | Project-scoped Art Director message persistence present; verify multi-session behavior |
