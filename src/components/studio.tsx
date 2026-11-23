@@ -74,7 +74,6 @@ export default function Studio() {
   const [searchGrounded, setSearchGrounded] = useState(false);
   const [language, setLanguage] = useState("same as source");
   const [posterImage, setPosterImage] = useState("");
-  const [posterProvider, setPosterProvider] = useState<"cloudflare" | "gemini" | null>(null);
   const [posterBusy, setPosterBusy] = useState(false);
   const [socialCopy, setSocialCopy] = useState("");
   const current = useMemo(() => library.find(p=>p.id===project.id) || project,[library,project]);
@@ -307,7 +306,7 @@ export default function Studio() {
   }
   async function importPdf(file: File) { const form=new FormData(); form.append("file",file); try { const response=await fetch("/api/import/pdf",{method:"POST",body:form}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setSource(data.text); setSourceName(file.name+" · "+data.pages+" pages"); setNotice("PDF text extracted. Review before generating."); } catch(error) { setNotice(error instanceof Error?error.message:"PDF import failed."); } }
   async function importUrl() { if (!urlInput.trim()) return; try { const response=await fetch("/api/import/url",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:urlInput.trim()})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setSource(data.text); setSourceName(data.title||"Imported webpage"); setNotice("Webpage imported. Review source text before generating."); } catch(error) { setNotice(error instanceof Error?error.message:"URL import failed."); } }
-  async function generatePoster() { setPosterBusy(true); try { const response=await fetch("/api/ai/poster",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:project.title+". "+project.subtitle+". "+project.takeawayQuote,ratio})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setPosterImage(data.image); setPosterProvider(data.provider === "gemini" ? "gemini" : "cloudflare"); setNotice(data.provider === "gemini" ? "Cloudflare was unavailable; the optional Gemini image backup generated this poster. Gemini usage may incur charges." : "Poster background generated with Cloudflare FLUX. Add editable typography in Canvas."); } catch(error) { setNotice(error instanceof Error?error.message:"Poster generation failed."); } finally { setPosterBusy(false); } }
+  async function generatePoster() { setPosterBusy(true); try { const response=await fetch("/api/ai/poster",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:project.title+". "+project.subtitle+". "+project.takeawayQuote,ratio})}); const data=await response.json(); if(!response.ok) throw new Error(data.error); setPosterImage(data.image); setNotice(data.provider === "gemini" ? "Cloudflare was unavailable; the optional Gemini image backup generated this poster. Gemini usage may incur charges." : "Poster background generated with Cloudflare FLUX. Add editable typography in Canvas."); } catch(error) { setNotice(error instanceof Error?error.message:"Poster generation failed."); } finally { setPosterBusy(false); } }
   async function downloadPoster() {
     if (!posterImage) return;
     try {
