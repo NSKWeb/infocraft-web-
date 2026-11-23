@@ -33,7 +33,8 @@ Server-side AI secret:
 
 - `GEMINI_API_KEY` — keep this server-side; never prefix it with `NEXT_PUBLIC_`.
 - `CLOUDFLARE_ACCOUNT_ID` — Cloudflare account ID for Poster Studio image generation.
-- `CLOUDFLARE_API_TOKEN` — server-side API token with Workers AI permissions; used only by Poster Studio.\n- `POSTER_GEMINI_FALLBACK_ENABLED` — optional; set to `true` to allow Gemini image generation as a backup for Poster Studio only. Default is `false`; image generation may incur paid charges. Requires `GEMINI_API_KEY`.
+- `CLOUDFLARE_API_TOKEN` — server-side API token with Workers AI permissions; used only by Poster Studio.
+- `POSTER_GEMINI_FALLBACK_ENABLED` — optional; set to `true` to allow Gemini image generation as a backup for Poster Studio only. Default is `false`; image generation may incur paid charges. Requires `GEMINI_API_KEY`.
 - `UPSTASH_REDIS_REST_URL` — Upstash Redis REST database URL for shared API rate-limit counters.
 - `UPSTASH_REDIS_REST_TOKEN` — Upstash Redis REST token; keep it secret and server-side.
 
@@ -131,7 +132,8 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 GEMINI_API_KEY=...
 CLOUDFLARE_ACCOUNT_ID=...
-CLOUDFLARE_API_TOKEN=...\nPOSTER_GEMINI_FALLBACK_ENABLED=false
+CLOUDFLARE_API_TOKEN=...
+POSTER_GEMINI_FALLBACK_ENABLED=false
 ```
 
 Set only the optional Firebase values you use. Keep `GEMINI_API_KEY` server-side. Restrict access to the file (for example, owner root and group-readable only by the app service group). Never commit it.
